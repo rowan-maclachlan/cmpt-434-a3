@@ -13,7 +13,7 @@ ARCH := $(shell uname -m)
 MAC_OS="Darwin"
 LINUX_OS="Linux"
 ########################################
-TARGET = test_distance
+TARGET = test_distance test_messages
 ########################################
 # directories
 OBJ = ./obj/
@@ -34,17 +34,25 @@ INC_FLAGS = -I$(INC)
 
 all: $(TARGET)
 
+# DISTANCE
 test_distance: $(OBJ)distance_test.o $(OBJ)distance.o
 	$(CC) $(C_FLAGS) $(INC_FLAGS) $^ -o $@
 
-$(OBJ)distance_test.o: $(SRC)distance_test.c $(INC)distance.h
+$(OBJ)distance_test.o: $(SRC)distance_test.c $(SRC)distance.c $(INC)distance.h
 	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
 
 $(OBJ)distance.o: $(SRC)distance.c $(INC)distance.h
 	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
 
+# MESSAGES 
+test_messages: $(OBJ)messages_test.o $(OBJ)messages.o
+	$(CC) $(C_FLAGS) $(INC_FLAGS) $^ -o $@
 
+$(OBJ)messages_test.o: $(SRC)messages_test.c $(SRC)messages.c $(INC)messages.h
+	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
 
+$(OBJ)messages.o: $(SRC)messages.c $(INC)messages.h
+	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
 
 clean:
 	rm -f $(OBJ)*

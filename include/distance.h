@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #define B_LEFT 0
 #define B_RIGHT 1000
 #define U_LEFT 1000
