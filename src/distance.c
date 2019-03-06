@@ -8,6 +8,7 @@
 
 #include <math.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "distance.h"
 
@@ -37,5 +38,22 @@ void move(int D, direction dir, position *p) {
     }
     else if (dir == WEST) {
         p->x = ((p->x + B_RIGHT) - D) % B_RIGHT;
+    }
+}
+
+/*
+ * Get a random direction
+ */
+direction get_random_direction() {
+    int dir = arc4random() % (WEST + 1);
+    switch (dir) {
+        case NORTH:
+            return NORTH;
+        case EAST:
+            return EAST;
+        case SOUTH:
+            return SOUTH;
+        default:
+            return WEST;
     }
 }

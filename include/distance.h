@@ -23,3 +23,5 @@ typedef enum direction {
 bool in_range(int T, position *p1, position *p2);
 
 void move(int D, direction dir, position *p);
+
+direction get_random_direction();
