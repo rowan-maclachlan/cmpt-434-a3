@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 #include "distance.h"
+#include "messages.h"
 
 /*
  * Serialize the identify message.
@@ -68,6 +69,104 @@ int deserialize_id_msg(char *buf, int *id, int *port_num, position *p) {
 
     if (4 != sscanf(buf, "%d/%d/(%d,%d)", 
                 id, port_num, &p->x, &p->y)) {
+        fprintf(stderr, "sscanf failed to scan input: \"%s\"\n", buf);
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * Serialize the in range confirmation message.
+ * This message is received by the sensor node from the logger to inform it
+ * whether it is in range or not.
+ *
+ * confirmation = { in_range/out_of_range }
+ *
+ * returns a serialize form of the message.
+ */
+int serialize_conf_msg(char *buf, enum confirmation conf) {
+    if (NULL == buf) {
+        fprintf(stderr, "input buffer cannot be NULL.\n");
+        return -1;
+    }
+
+    return sprintf(buf, "%d", conf);
+}
+
+/*
+ * Deserialize the range confirmation message.
+ * This message is received by the sensor node from the logger to inform it
+ * whether it is in range or not.
+ *
+ * confirmation = { [in_range|out_of_range] }
+ *
+ * returns the deserialized components of the message.
+ */
+int deserialize_conf_msg(char *buf, enum confirmation *conf) {
+    if (NULL == buf) {
+        fprintf(stderr, "Output buffer cannot be NULL.\n");
+        return -1;
+    }
+    if (NULL == conf) {
+        fprintf(stderr, "Output confirmation value cannot be NULL.\n");
+        return -1;
+    }
+
+    if (1 != sscanf(buf, "%d", conf)) {
+        fprintf(stderr, "sscanf failed to scan input: \"%s\"\n", buf);
+        return -1;
+    }
+
+   return 0;
+}
+
+/*
+ * Serialize the payload message.
+ * This message is received by the logger node from the sensor node to
+ * communicate its payload
+ *
+ * data = { id/payload }
+ *
+ * returns a serialize form of the message.
+ */
+int serialize_data_msg(char *buf, int id, char *payload) {
+    if (NULL == buf) {
+        fprintf(stderr, "input buffer cannot be NULL.\n");
+        return -1;
+    }
+    if (NULL == payload) {
+        fprintf(stderr, "input payload buffer cannot be NULL.\n");
+        return -1;
+    }
+
+    return sprintf(buf, "%d/%s", id, payload);
+}
+
+/*
+ * Serialize the payload message.
+ * This message is received by the logger node from the sensor node to
+ * communicate its payload
+ *
+ * data = { id/payload }
+ *
+ * returns a serialize form of the message.
+ */
+int deserialize_data_msg(char *buf, int *id, char *payload) {
+    if (NULL == buf) {
+        fprintf(stderr, "Output buffer cannot be NULL.\n");
+        return -1;
+    }
+    if (NULL == id) {
+        fprintf(stderr, "Output id value cannot be NULL.\n");
+        return -1;
+    }
+    if (NULL == payload) {
+        fprintf(stderr, "Output payload value cannot be NULL.\n");
+        return -1;
+    }
+
+    if (2 != sscanf(buf, "%d/%s", id, payload)) {
         fprintf(stderr, "sscanf failed to scan input: \"%s\"\n", buf);
         return -1;
     }

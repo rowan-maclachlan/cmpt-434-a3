@@ -40,11 +40,58 @@ void deserialize_identity_msg_test() {
     assert(p.y == 50); 
 }
 
+void serialize_confirmation_msg_test() {
+    enum confirmation conf = IN_RANGE;
+    char buf[CONF_MSG_SIZE];
+    char *expected = "0";
+
+    assert(1 == serialize_conf_msg(buf, conf));
+
+    assert(0 == strcmp(buf, expected)); 
+}
+
+void deserialize_confirmation_msg_test() {
+    enum confirmation conf = IN_RANGE;
+    char *buf = "1";
+
+    assert(0 == deserialize_conf_msg(buf, &conf));
+
+    assert(conf == OUT_OF_RANGE); 
+}
+
+void serialize_data_msg_test() {
+    char buf[DATA_MSG_SIZE];
+    char *expected = "123/the_payload";
+    int id = 123;
+    char *payload = "the_payload";
+
+    assert(15 == serialize_data_msg(buf, id, payload));
+    assert(0 == strcmp(buf, expected)); 
+}
+
+void deserialize_data_msg_test() {
+    char payload[PAYLOAD_SIZE];
+    int id = 0;
+    char *buf = "123/the_payload";
+
+    assert(0 == deserialize_data_msg(buf, &id, payload));
+    assert(0 == strcmp(payload, "the_payload")); 
+    assert(id == 123); 
+}
+
 int main(void) {
 
     serialize_identity_msg_test();
 
     deserialize_identity_msg_test();
+
+    serialize_confirmation_msg_test();
+
+    deserialize_confirmation_msg_test();
+
+    serialize_data_msg_test();
+
+    deserialize_data_msg_test();
 
     printf("All messages tests passed!\n");
 
