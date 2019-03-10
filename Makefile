@@ -1,6 +1,5 @@
 ########################################
-# Rowan MacLachlan
-# rdm695
+# Rowan MacLachlan # rdm695
 # 11165820
 # March 18th 2019 
 # CMPT 434 Eager 
@@ -13,7 +12,9 @@ ARCH := $(shell uname -m)
 MAC_OS="Darwin"
 LINUX_OS="Linux"
 ########################################
-TARGET = test_distance test_messages
+TARGET = sensor 
+TEST = test_distance test_messages
+EXEC = sensor
 ########################################
 # directories
 OBJ = ./obj/
@@ -32,7 +33,18 @@ INC_FLAGS = -I$(INC)
 # recipes
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(TARGET) $(TEST)
+
+# SENSOR NODE
+sensor: $(OBJ)sensor.o $(OBJ)distance.o $(OBJ)messages.o $(OBJ)common.o
+	$(CC) $(C_FLAGS) $(INC_FLAGS) $^ -o $@
+
+$(OBJ)sensor.o: $(SRC)sensor.c $(INC)distance.h $(INC)messages.h
+	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
+
+# COMMON
+$(OBJ)common.o: $(SRC)common.c $(INC)common.h
+	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
 
 # DISTANCE
 test_distance: $(OBJ)distance_test.o $(OBJ)distance.o
@@ -57,4 +69,4 @@ $(OBJ)messages.o: $(SRC)messages.c $(INC)messages.h
 clean:
 	rm -f $(OBJ)*
 	rmdir $(OBJ)
-	rm -f $(EXEC) test
+	rm -f $(EXEC) $(TEST)
