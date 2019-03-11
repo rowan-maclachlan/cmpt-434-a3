@@ -1,19 +1,20 @@
+/* 
+ * Rowan MacLachlan
+ * rdm695 11165820
+ * CMPT 434 Eager
+ * assignment 3
+ * Monday March 18th 2019
+ */
+
 #pragma once
-// Rowan MacLachlan
-// rdm695 22265820
-// CMPT 434 Derek Eager
-// February 7th, 6pm
-// assignment 2
 
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <stdbool.h>
 
-#define MAXLINE 1024
-
-bool timeout(time_t timeout);
-
-void set_timeout(time_t *timeout);
+#define PORT_SIZE 16 
+#define HOSTNAME_SIZE 64
+#define MAX_SENSORS 64
 
 char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen);
 

@@ -20,8 +20,6 @@
 
 #include "common.h"
 
-#define PORT_SIZE 16 
-#define HOSTNAME_SIZE 64
 #define USAGE "./sensor_node <id> <payload> <D> <listening_port> <logger_hostname> <logger_port>\n"
 
 bool _init_args(int argc, char **argv, int *id, int *distance) {
@@ -50,7 +48,6 @@ bool _init_args(int argc, char **argv, int *id, int *distance) {
  *  uint32 listening_port, 
  *  char *logger_name, 
  *  uint32 logger_port
- * "./sensor_node <id> <payload> <D> <listening_port> <logger_hostname> <logger_port>\n"
  */
 int main(int argc, char **argv) {
     int sockfd;

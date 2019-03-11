@@ -16,125 +16,68 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "tcp_server.h"
-#include "tcp_common.h"
+#include "common.h"
+#include "distance.h"
+#include "messages.h"
 
-#define PORT "32000"
-#define BACKLOG 10
-#define HOSTNAME_LEN 256
+#define USAGE "./logger <port_number> <T> <number of sensors>"
 
-/**
- * Returns  -1 If there is an error with the request
- *          or the number of bytes we failed to receive and write successfully
- */
-int _put(int sockfd, struct command *cmd) {
-    FILE *file;
-    int n_remaining = 0;
-
-    file = fopen(cmd->dest, "w");
-    if (NULL == file) {
-        perror("server: fopen(cmd->dest, \"w\")");
-        cmd->err = FILE_CANT_WRITE;
-        send_cmd(sockfd, cmd);
-        return -1;
+bool _init_args(int argc, 
+                char **argv, 
+                unsigned int *transmission_range, 
+                unsigned int *num_nodes, 
+                char *port) {
+    if (argc != 4) {
+        fprintf(stderr, "Not enough arguments.\n");
+        return false;
     }
 
-    // Send handshake
-    cmd->err = FILE_OK;
-    send_cmd(sockfd, cmd);
-
-    // receive file
-    if (0 != (n_remaining = recv_write_file(sockfd, file, cmd->fsz))) {
-        fprintf(stderr, "Error: server: failed to receive/write full file.\n");
-        cmd->err = FILE_INCOMPLETE;
-        cmd->fsz = n_remaining;
+    strcpy(port, argv[1]);
+    if (0 >= sscanf(argv[2], "%u", transmission_range)) {
+        fprintf(stderr, "Invalid transmission range.\n");
+        return false;
     }
-
-    fclose(file);
-
-    // Send confirmation command.
-    send_cmd(sockfd, cmd);
-
-    return n_remaining;
+    if (0 >= sscanf(argv[3], "%u", num_nodes) || MAX_SENSORS < *num_nodes) {
+        fprintf(stderr, "Invalid number of nodes: set 0 < %u < %u.\n", *num_nodes, MAX_SENSORS);
+        return false;
+    }
+    
+    return true;
 }
 
-/**
- * Returns  -1 If there is an error with the request
- *          or the number of bytes we failed to receive and write successfully
- */
-int _get(int sockfd, struct command *cmd) {
-    FILE *file;
-    int n_remaining = 0;
-
-    file = fopen(cmd->src, "r");
-    if (NULL == file) {
-        perror("server: fopen(cmd->src, \"r\")");
-        cmd->err = FILE_CANT_READ;
-        send_cmd(sockfd, cmd);
-        return -1;
-    }
-
-    fseek(file, 0L, SEEK_END);
-    cmd->fsz = ftell(file);
-    fseek(file, 0L, SEEK_SET);
-    if (cmd->fsz > FILESIZE_MAX) {
-        fprintf(stderr, "Filesize exceeds limits.\n");
-        cmd->err = FILE_OVERSIZE;
-        send_cmd(sockfd, cmd);
-        fclose(file);
-        return -1;
-    }
-    else if (cmd->fsz <= 0) {
-        fprintf(stderr, "File is empty.\n");
-        cmd->err = FILE_EMPTY;
-        send_cmd(sockfd, cmd);
-        fclose(file);
-        return -1;
-    }
-
-    // Send handshake message
-    cmd->err = FILE_OK;
-    send_cmd(sockfd, cmd);
-    sleep(1);
-    // send file
-    n_remaining = send_file(file, sockfd, cmd->fsz);
-    fclose(file);
-
-    // Recieve confirmation that the file was fully written successfully.
-    if (-1 == recv_cmd(sockfd, cmd)) {
-        fprintf(stderr, "Error: server: failed to receive the confirmation command.\n");
-        return -1;
-    }
-
-    return n_remaining;
-}
 
 int main(int argc, char **argv) {
     char s[INET6_ADDRSTRLEN];
-    struct sockaddr_storage their_addr; // connector's address information
-    struct addrinfo hints;
+    struct sockaddr_storage their_addr;
+    struct addrinfo *servinfo, *p, hints;
     socklen_t sin_size;
-    struct addrinfo *servinfo;
-    struct addrinfo *p;
-    int sock_fd = 0; // listen on this fd
-    int new_fd = 0; // listening for the child process
-    int status;
-    struct command cmd;
+    int sock_fd, new_fd, status;
     int yes = 1;
-    char hostname[HOSTNAME_LEN];
+    char hostname[HOSTNAME_SIZE];
+
+    unsigned int transmission_range, num_nodes;
+    char port[PORT_SIZE];
+
+    if (!_init_args(argc, argv, &transmission_range, &num_nodes, port)) {
+        fprintf(stderr, USAGE);
+        exit(1);
+    }
+
+    printf("logger process listening on port %s with transmission range %u and %u nodes\n",
+           port, transmission_range, num_nodes);
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE; // use my IP
+	hints.ai_flags = AI_PASSIVE;
 
-	if ((status = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
+	if ((status = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
 		perror("server: getaddrinfo");
 		return 1;
 	}
 
-    gethostname(hostname, HOSTNAME_LEN);
-    printf("Running on host %s and port %s.\n", hostname, PORT);
+    gethostname(hostname, HOSTNAME_SIZE);
+    printf("Running on host %s and listening on port %s.\n", hostname, port);
 
 	// loop through all the results and bind to the first we can
 	for(p = servinfo; p != NULL; p = p->ai_next) {
@@ -158,63 +101,19 @@ int main(int argc, char **argv) {
 		break;
 	}
 
-	freeaddrinfo(servinfo); // all done with this structure
-
     if (p == NULL) {
         fprintf(stderr, "server: failed to bind to valid addrinfo");
         exit(1);
     }
 
-    if (listen(sock_fd, BACKLOG) == -1) {
+    if (listen(sock_fd, 10) == -1) {
         perror("listen");
         exit(1);
     }
 
     printf("server: waiting for connections...\n");
 
-
-    while(1) {
-        sin_size = sizeof their_addr;
-        new_fd = accept(sock_fd, (struct sockaddr *)&their_addr, &sin_size);
-        if (new_fd == -1) {
-            perror("accept");
-            continue;
-        }
-
-        void * in_addr = get_in_addr((struct sockaddr *)&their_addr);
-        inet_ntop(their_addr.ss_family, in_addr, s, sizeof s);
-
-        printf("server: got connection from %s on socket %d\n", s, new_fd);
-
-        while(1) {
-            printf("server: waiting for commands...\n");
-
-            if (-1 == recv_cmd(new_fd, &cmd)) {
-                fprintf(stderr, "Error: server: failed to receive command.\n");
-                sleep(2);
-                continue;
-            }
-
-            if (cmd.type == PUT) {
-                if (0 != (status = _put(new_fd, &cmd))) {
-                    fprintf(stderr, "Error: server: failed to execute put command: %d\n", status);
-                }
-            }
-            else if (cmd.type == GET) {
-                if (0 != (status = _get(new_fd, &cmd))) {
-                    fprintf(stderr, "Error: server: failed to execute get command: %d\n", status);
-                }
-            }
-            else if (cmd.type == QUIT) {
-                printf("server: closing connections with socket %d.\n", new_fd);
-                close(new_fd);
-                break;
-            }
-            else {
-               fprintf(stderr, "Invalid command format.\n");
-            }
-        }
-    }
+    free(servinfo);
 
     return 0;
 }

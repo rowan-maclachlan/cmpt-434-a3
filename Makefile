@@ -2,8 +2,7 @@
 # Rowan MacLachlan # rdm695
 # 11165820
 # March 18th 2019 
-# CMPT 434 Eager 
-# Makefile
+# CMPT 434 Eager # Makefile
 
 ########################################
 # OS and architecture macros
@@ -12,9 +11,9 @@ ARCH := $(shell uname -m)
 MAC_OS="Darwin"
 LINUX_OS="Linux"
 ########################################
-TARGET = sensor 
 TEST = test_distance test_messages
-EXEC = sensor
+EXEC = sensor logger
+TARGET = $(EXEC)
 ########################################
 # directories
 OBJ = ./obj/
@@ -35,11 +34,21 @@ INC_FLAGS = -I$(INC)
 
 all: $(TARGET) $(TEST)
 
+COM_OBJ=$(OBJ)distance.o $(OBJ)messages.o $(OBJ)common.o
+COM_INC=$(INC)distance.h $(INC)messages.h $(INC)common.h
+
 # SENSOR NODE
-sensor: $(OBJ)sensor.o $(OBJ)distance.o $(OBJ)messages.o $(OBJ)common.o
+sensor: $(OBJ)sensor.o $(COM_OBJ) 
 	$(CC) $(C_FLAGS) $(INC_FLAGS) $^ -o $@
 
-$(OBJ)sensor.o: $(SRC)sensor.c $(INC)distance.h $(INC)messages.h
+$(OBJ)sensor.o: $(SRC)sensor.c $(COM_INC) 
+	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
+
+# LOGGER 
+logger: $(OBJ)logger.o $(COM_OBJ) 
+	$(CC) $(C_FLAGS) $(INC_FLAGS) $^ -o $@
+
+$(OBJ)logger.o: $(SRC)logger.c $(COM_INC) 
 	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
 
 # COMMON
