@@ -77,6 +77,13 @@ int deserialize_id_msg(char *buf, int *id, int *port_num, position *p) {
 }
 
 /*
+ * Log a message.
+ */
+void log_id_msg(char *buf, char *src) {
+    printf("%s: received ID message \"%s\"\n", src, buf);
+}
+
+/*
  * Serialize the in range confirmation message.
  * This message is received by the sensor node from the logger to inform it
  * whether it is in range or not.
@@ -119,6 +126,13 @@ int deserialize_conf_msg(char *buf, enum confirmation *conf) {
     }
 
    return 0;
+}
+
+/*
+ * Log a message.
+ */
+void log_conf_msg(char *buf, char *src) {
+    printf("%s: received confirmation message \"%s\"\n", src, buf);
 }
 
 /*
@@ -172,4 +186,11 @@ int deserialize_data_msg(char *buf, int *id, char *payload) {
     }
 
     return 0;
+}
+
+/*
+ * Log a message.
+ */
+void log_data_msg(char *buf, char *src) {
+    printf("%s: received data message \"%s\"\n", src, buf);
 }

@@ -57,3 +57,11 @@ direction get_random_direction() {
             return WEST;
     }
 }
+
+/*
+ * Get a random position
+ */
+void get_random_position(position *p) {
+    p->x = arc4random() % U_LEFT;
+    p->y = arc4random() % U_LEFT;
+}
