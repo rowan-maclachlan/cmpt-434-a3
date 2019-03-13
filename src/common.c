@@ -50,12 +50,12 @@ void get_hostname_from(char *their_ip, struct sockaddr *host) {
     struct sockaddr_in *ss4 = (struct sockaddr_in*)&host;
     struct sockaddr_in6 *ss6 = (struct sockaddr_in6*)&host;
     if (ss->ss_family == AF_INET) { // IPv4 address
-        strncpy(their_ip, ss4->sin_addr.s_addr, sizeof(ss4->sin_addr.s_addr)); 
-        their_ip[strlen(their_ip)] = '\0';
+        bcopy((void*)ss4->sin_addr.s_addr, their_ip, sizeof(ss4->sin_addr.s_addr));
+        their_ip[sizeof(ss4->sin_addr.s_addr)] = '\0';
     }
     else { // IPv6
-        strncpy(their_ip, ss6->sin6_addr.s6_addr, sizeof(ss6->sin6_addr.s6_addr)); 
-        their_ip[strlen(their_ip)] = '\0';
+        bcopy(ss6->sin6_addr.s6_addr, their_ip, sizeof(ss6->sin6_addr.s6_addr));
+        their_ip[sizeof(ss6->sin6_addr.s6_addr)] = '\0';
     }
 }
 

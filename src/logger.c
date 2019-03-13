@@ -161,7 +161,14 @@ int listen_loop(int sockfd, int num_nodes) {
                 goto _done;
             }
 
+            char INFO_MSG_BUF[INFO_MSG_SIZE] = { 0 };
             // TODO receive as many logs as arrive (INFO messages)
+            if (0 >= recv(sensorfd, INFO_MSG_BUF, INFO_MSG_SIZE, 0)) {
+                perror("logger: recv (INFO)");
+                goto _done;
+            }
+
+            log_info_msg(INFO_MSG_BUF);
         }
 
 _done: 

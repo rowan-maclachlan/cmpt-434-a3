@@ -25,7 +25,7 @@ int serialize_info_msg(char *buf, int sender, int receiver, int original);
 
 int deserialize_info_msg(char *buf, int *sender, int *receiver, int *original);
 
-void log_info_msg(int sender, int receiver, int original);
+void log_info_msg(char *buf);
 
 int serialize_request_msg(char *buf, bool req);
 

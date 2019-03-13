@@ -60,7 +60,11 @@ int deserialize_info_msg(char *buf, int *sender, int *receiver, int *original) {
     return 0;
 }
 
-void log_info_msg(int sender, int receiver, int original) {
+void log_info_msg(char *buf) {
+    int sender, receiver, original = 0;
+
+    deserialize_info_msg(buf, &sender, &receiver, &original);
+
     printf("Sensor node %d passed sensor %d's payload to sensor %d.\n",
            sender, receiver, original);
 }

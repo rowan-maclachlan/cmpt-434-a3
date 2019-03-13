@@ -31,20 +31,39 @@ int DISTANCE = 0;
 struct sensor me;
 /* To keep track of alternate sensors */
 static struct sensor sensors[MAX_SENSORS] = { 0 };
+/* When do we timeout on select? */
+struct timeval poll_val = { 1, 0 };
 
 int connect_loop(char *logger_hostname, char *logger_port) {
-    int loggerfd, sensorfd;
+    int myfd, loggerfd, sensorfd;
+    fd_set master_set;
 
     while(1) {
         sleep(1);
 
         move(DISTANCE, get_random_direction(), &me.p);
 
+        // open up for connections with other sensors
+        if (-1 == (myfd = server_connect_with(me.port))) {
+            fprintf(stderr, "sensor: failed to listen for incoming connections.\n");
+            goto _done;
+        }
+
         // open connection
         if (-1 == (loggerfd = client_connect_to(logger_hostname, logger_port))) {
             fprintf(stderr, "sensor: failed to connect to logger.\n");
             fprintf(stderr, "*** FATAL ***\n");
             return -1;
+        }
+
+        FD_ZERO(&master_set);
+        FD_SET(myfd, &master_set);
+        FD_SET(loggerfd, &master_set);
+        int maxfd = loggerfd > myfd ? loggerfd : myfd;
+
+        if (-1 == select(maxfd+1, &master_set, NULL, NULL, &poll_val)) {
+            perror("sensor: select\n");
+            goto _done;
         }
 
         if (-1 == send_id_msg(loggerfd, &me)) {
