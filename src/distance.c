@@ -12,6 +12,14 @@
 
 #include "distance.h"
 
+/* Returns true if a is strictly closer to 'to' than b */
+bool closest(position *to, position *a, position *b) {
+    int dist_to_a = floor(sqrt( pow((a->x - to->x), 2) + pow((a->y - to->y), 2)));
+    int dist_to_b = floor(sqrt( pow((b->x - to->x), 2) + pow((b->y - to->y), 2)));
+
+    return dist_to_a < dist_to_b;
+}
+
 /*
  * Calculate whether p1 and p2 are at least as near to each other as the
  * distance T.  Do this by taking the floor of the hypothenus derived from

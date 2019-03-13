@@ -8,22 +8,32 @@
 
 #pragma once
 
+#include <stdbool.h>
 #include "distance.h"
 
+#define INFO_MSG_SIZE 32
+#define REQUEST_MSG_SIZE 64
+#define CONTACT_MSG_SIZE 64
 #define ID_MSG_SIZE 64
 #define CONF_MSG_SIZE 64
 #define DATA_MSG_SIZE 64
 #define PAYLOAD_SIZE 32
 
-enum confirmation {
-    IN_RANGE,
-    OUT_OF_RANGE
-};
+struct sensor;
 
-enum received {
-    UNRECEIVED,
-    RECEIVED
-};
+int serialize_info_msg(char *buf, int sender, int receiver, int original);
+
+int deserialize_info_msg(char *buf, int *sender, int *receiver, int *original);
+
+void log_info_msg(int sender, int receiver, int original);
+
+int serialize_request_msg(char *buf, bool req);
+
+int deserialize_request_msg(char *buf, bool *req);
+
+int serialize_contact_msg(char *buf, struct sensor *sensor);
+
+int deserialize_contact_msg(char *buf, struct sensor *sensor);
 
 int serialize_id_msg(char *buf, int id, char *port_num, position *p);
 
@@ -31,9 +41,9 @@ int deserialize_id_msg(char *buf, int *id, int *port_num, position *p);
 
 void log_id_msg(char *buf, char *src);
 
-int serialize_conf_msg(char *buf, enum confirmation conf);
+int serialize_conf_msg(char *buf, bool conf);
 
-int deserialize_conf_msg(char *buf, enum confirmation *conf);
+int deserialize_conf_msg(char *buf, bool *conf);
 
 void log_conf_msg(char *buf, char *src);
 

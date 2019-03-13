@@ -43,10 +43,13 @@ tests:
 	./test_distance
 
 # SENSOR NODE
-sensor: $(OBJ)sensor.o $(COM_OBJ) 
+sensor: $(OBJ)sensor.o $(OBJ)sensor_aux.o $(COM_OBJ) 
 	$(CC) $(C_FLAGS) $(INC_FLAGS) $^ -o $@
 
-$(OBJ)sensor.o: $(SRC)sensor.c $(COM_INC) 
+$(OBJ)sensor.o: $(SRC)sensor.c $(INC)sensor_aux.h $(COM_INC) 
+	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
+
+$(OBJ)sensor_aux.o: $(SRC)sensor_aux.c $(INC)sensor_aux.h $(COM_INC) 
 	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
 
 # LOGGER 
@@ -77,7 +80,7 @@ $(OBJ)distance.o: $(SRC)distance.c $(INC)distance.h
 	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@
 
 # MESSAGES 
-test_messages: $(OBJ)messages_test.o $(OBJ)messages.o
+test_messages: $(OBJ)messages_test.o $(OBJ)messages.o $(OBJ)common.o
 	$(CC) $(C_FLAGS) $(INC_FLAGS) $^ -o $@
 
 $(OBJ)messages_test.o: $(SRC)messages_test.c $(SRC)messages.c $(INC)messages.h

@@ -12,6 +12,25 @@
 
 #include "distance.h"
 
+void closest_test() {
+    position to = { 500, 500 };
+    position a;
+    position b;
+
+    a.x = 100;
+    a.y = 100;
+
+    b.x = 99;
+    b.y = 99;
+
+    assert(closest(&to, &a, &b));
+
+    b.x = 101;
+    b.y = 101;
+
+    assert(!closest(&to, &a, &b));
+}
+
 void in_range_test() {
     position p1;
     position p2;
@@ -69,6 +88,8 @@ void move_test() {
 }
 
 int main(int argc, char *argv[]) {
+
+    closest_test();
 
     in_range_test();
 

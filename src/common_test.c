@@ -34,8 +34,6 @@ void save_sensor_tests() {
     assert(sensor.p.y = 789);
     assert(sensor.host.sa_family == AF_INET);
     assert(sensor.host.sa_data[0] == 1);
-    assert(sensor.rcvd == RECEIVED);
-
 }
 
 int main(void) {

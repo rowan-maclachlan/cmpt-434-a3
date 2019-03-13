@@ -30,6 +30,8 @@ typedef enum direction {
     WEST
 } direction;
 
+bool closest(position *to, position *a, position *b);
+
 bool in_range(int T, position *p1, position *p2);
 
 void move(int D, direction dir, position *p);

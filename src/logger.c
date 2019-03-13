@@ -27,9 +27,9 @@
  * runtime */
 unsigned int TRANS_RANGE = 0;
 /* Define the position of the base station */
-position BASE_STATION = { BASE_STATION_X, BASE_STATION_Y };
+static position BASE_STATION = { BASE_STATION_X, BASE_STATION_Y };
 /* Track which sensors have delivered their payloads */
-struct sensor sensors[MAX_SENSORS] = { 0 };
+static struct sensor sensors[MAX_SENSORS] = { 0 };
 
 bool _init_args(int argc, 
                 char **argv, 
@@ -62,6 +62,7 @@ int listen_loop(int sockfd, int num_nodes) {
     char ID_MSG_BUF[ID_MSG_SIZE] = { 0 };
     char CONF_MSG_BUF[CONF_MSG_SIZE] = { 0 };
     char DATA_MSG_BUF[DATA_MSG_SIZE] = { 0 };
+    char CONTACT_MSG_BUF[CONTACT_MSG_SIZE] = { 0 };
 
     if (listen(sockfd, MAX_SENSORS) == -1) {
         perror("listen");
@@ -100,9 +101,9 @@ int listen_loop(int sockfd, int num_nodes) {
                     their_port, their_id, their_position);
         
         // send confirmation message
-        enum confirmation conf = OUT_OF_RANGE;
+        bool conf = false;
         if (in_range(TRANS_RANGE, &their_position, &BASE_STATION)) {
-            conf = IN_RANGE;
+            conf = true;
         }
         if (0 >= serialize_conf_msg(CONF_MSG_BUF, conf)) {
             fprintf(stderr, "logger: failed to serialize confirmation message.\n");
@@ -115,7 +116,7 @@ int listen_loop(int sockfd, int num_nodes) {
 
         // if in range, recv data msg
         char PAYLOAD[PAYLOAD_SIZE] = { 0 };
-        if (IN_RANGE == conf) {
+        if (conf) {
             if (0 >= recv(sensorfd, DATA_MSG_BUF, DATA_MSG_SIZE, 0)) {
                 perror("logger: recv (DATA_MSG)");
                 goto _done;
@@ -130,13 +131,37 @@ int listen_loop(int sockfd, int num_nodes) {
 
             strncpy(sensors[their_id].payload, PAYLOAD, PAYLOAD_SIZE);
 
-            if (sensors[their_id].rcvd == RECEIVED) {
+            if (sensors[their_id].rcvd) {
                 printf("logger: received duplicate payload for sensor %d.\n", their_id);
             }
             else {
-                sensors[their_id].rcvd = RECEIVED;
+                sensors[their_id].rcvd = true;
                 num_nodes--;
             }
+        }
+        // if not in range, send alternate message and receive logs
+        else {
+            int closer = their_id;
+            for (int i = 0; i < MAX_SENSORS; i++) {
+                struct sensor s = sensors[i];
+                if (s.active == INACTIVE) {
+                    continue;
+                }
+                if (closest(&BASE_STATION, &s.p, &sensors[closer].p)
+                  && in_range(TRANS_RANGE, &s.p, &sensors[closer].p)) {
+                    closer = i;
+                }
+            }
+            if (0 >= serialize_contact_msg(CONTACT_MSG_BUF, &sensors[closer])) {
+                fprintf(stderr, "logger: failed to serialize confirmation message.\n");
+                goto _done;
+            }
+            if (0 >= send(sensorfd, CONTACT_MSG_BUF, CONTACT_MSG_SIZE, 0)) {
+                perror("logger: send (CONF_MSG)");
+                goto _done;
+            }
+
+            // TODO receive as many logs as arrive (INFO messages)
         }
 
 _done: 
@@ -148,10 +173,7 @@ _done:
 
 
 int main(int argc, char **argv) {
-    struct addrinfo *servinfo, *p, hints;
-    int sockfd, status;
-    int yes = 1;
-    char hostname[HOSTNAME_SIZE];
+    int sockfd;
     time_t start_time = 0;
 
     unsigned int num_nodes;
@@ -165,49 +187,16 @@ int main(int argc, char **argv) {
     printf("logger process listening on port %s with transmission range %u and %u nodes\n",
            port, TRANS_RANGE, num_nodes);
 
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
-
-	if ((status = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
-		perror("server: getaddrinfo");
-		return 1;
-	}
-
-    gethostname(hostname, HOSTNAME_SIZE);
-    printf("Running on host %s and listening on port %s.\n", hostname, port);
-
-	// loop through all the results and bind to the first we can
-	for(p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket(p->ai_family, p->ai_socktype,
-				p->ai_protocol)) == -1) {
-			perror("server: socket");
-			continue;
-		}
-
-		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
-				sizeof(int)) == -1) {
-			perror("setsockopt");
-			exit(1); }
-
-		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-			close(sockfd);
-			perror("server: bind");
-			continue;
-		}
-
-		break;
-	}
-
-    if (p == NULL) {
-        fprintf(stderr, "server: failed to bind to valid addrinfo");
+    if (-1 == (sockfd = server_connect_with(port))) {
+        fprintf(stderr, "server: Failed to setup.\n");
+        fprintf(stderr, " *** FATAL *** \n");
         exit(1);
     }
 
     start_time = time(NULL);
     if (-1 == listen_loop(sockfd, num_nodes)) {
         fprintf(stderr, "logger: failed in listen loop.\n");
+        fprintf(stderr, " *** FATAL *** \n");
         exit(1);
     }
     start_time = time(NULL) - start_time;

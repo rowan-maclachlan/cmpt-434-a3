@@ -22,6 +22,15 @@
 #include <arpa/inet.h>
 
 #include "common.h"
+#include "messages.h"
+
+void print_bytes(char *buf, int len) {
+    for (int i = 0; i < len; i++) {
+        if (i > 0) printf(":");
+        printf("%02X", buf[i]);
+    }
+    printf("\n");
+}
 
 void save_sensor(struct sensor *sensor, 
                  struct sockaddr *their_addr,
@@ -32,10 +41,77 @@ void save_sensor(struct sensor *sensor,
     sensor->p = their_position;
     sprintf(sensor->port, "%d", their_port);
     memcpy(&sensor->host, their_addr, sizeof (struct sockaddr));
-    sensor->rcvd = RECEIVED;
+    sensor->active = ACTIVE;
 }
 
-int client_connect_to(char *host, char *port, struct addrinfo *dest) {
+/* Copy the ip from the sockaddr host into the buffer 'their_ip' */
+void get_hostname_from(char *their_ip, struct sockaddr *host) {
+    struct sockaddr_storage *ss = (struct sockaddr_storage*)&host;
+    struct sockaddr_in *ss4 = (struct sockaddr_in*)&host;
+    struct sockaddr_in6 *ss6 = (struct sockaddr_in6*)&host;
+    if (ss->ss_family == AF_INET) { // IPv4 address
+        strncpy(their_ip, ss4->sin_addr.s_addr, sizeof(ss4->sin_addr.s_addr)); 
+        their_ip[strlen(their_ip)] = '\0';
+    }
+    else { // IPv6
+        strncpy(their_ip, ss6->sin6_addr.s6_addr, sizeof(ss6->sin6_addr.s6_addr)); 
+        their_ip[strlen(their_ip)] = '\0';
+    }
+}
+
+int server_connect_with(char *port) {
+    struct addrinfo *servinfo, *p, hints;
+    int sockfd, status;
+    int yes = 1;
+    char hostname[HOSTNAME_SIZE];
+
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+
+	if ((status = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
+		perror("server: getaddrinfo");
+		return 1;
+	}
+
+    gethostname(hostname, HOSTNAME_SIZE);
+    printf("Running on host %s and listening on port %s.\n", hostname, port);
+
+	// loop through all the results and bind to the first we can
+	for(p = servinfo; p != NULL; p = p->ai_next) {
+		if ((sockfd = socket(p->ai_family, p->ai_socktype,
+				p->ai_protocol)) == -1) {
+			perror("server: socket");
+			continue;
+		}
+
+		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+				sizeof(int)) == -1) {
+			perror("setsockopt");
+			continue;
+        }
+
+		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+			close(sockfd);
+			perror("server: bind");
+			continue;
+		}
+
+		break;
+	}
+
+    if (p == NULL) {
+        fprintf(stderr, "server: failed to bind to valid addrinfo");
+        return -1;
+    }
+
+    freeaddrinfo(servinfo);
+
+    return sockfd;
+}
+
+int client_connect_to(char *host, char *port) {
     int sockfd = 0;
     struct addrinfo hints, *servinfo, *p;
     char s[INET6_ADDRSTRLEN];
@@ -78,12 +154,12 @@ int client_connect_to(char *host, char *port, struct addrinfo *dest) {
     printf("sensor: connecting to %s on socket %d\n", s, sockfd);
 
     // copy p -> dest
-    memcpy(dest, p, sizeof (*dest)); 
-    dest->ai_addr = malloc(sizeof(struct sockaddr));
-    dest->ai_addr->sa_family = p->ai_addr->sa_family;
-    strcpy(dest->ai_addr->sa_data, p->ai_addr->sa_data);
-    dest->ai_canonname = NULL;
-    dest->ai_next = NULL;
+    //memcpy(dest, p, sizeof (*dest)); 
+    //dest->ai_addr = malloc(sizeof(struct sockaddr));
+    //dest->ai_addr->sa_family = p->ai_addr->sa_family;
+    //strcpy(dest->ai_addr->sa_data, p->ai_addr->sa_data);
+    //dest->ai_canonname = NULL;
+    //dest->ai_next = NULL;
     
     // Free unused server info structs
     freeaddrinfo(servinfo);
