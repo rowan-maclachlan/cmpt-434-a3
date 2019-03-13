@@ -1,0 +1,151 @@
+\documentclass[10pt]{amsart}
+\usepackage{hyperref}
+\usepackage{parskip,fullpage}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{siunitx}
+\usepackage{multirow} % These packages are used for rendering adjacency matrices
+\usepackage{rotating} 
+\sisetup{output-exponent-marker=\ensuremath{\mathrm{e}}}
+
+\geometry{
+	body={7in, 9.5in},
+	left=.5in,
+	top=.50in
+}
+
+\newtheorem*{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\calclayout
+\begin{document} \textbf{CMPT 434 Assignment 2} \\ Winter 2019\\
+Due Date: Monday January 11th\\
+rdm659 11165820
+
+Part B
+
+\begin{enumerate}
+    \item (2 marks) Give the checksum for 10111010101 using CRC with
+        generator 11011.\\
+        $m = 10111010101$, $r = 4$, $G = 11011$\\
+        We want to add $r$ (4) bits to $m$ such that $0 = (m / G)$
+        Then, we need to calculate the remainder from dividing $G$ into $m + r$,
+        and add that remainder to the transmitted frame before sending it.\\
+        \begin{enumerate}
+            \item Add $r$ zeroes to $m$\\
+                $m+r \rightarrow 101110101010000$
+            \item Divide $G$ into $m+r$\\
+                $11011 / 101110101010000$ gives remainder 1011:\\
+                \begin{enumerate}
+                    \item $10111$ XOR $11011 \rightarrow 1100$
+                    \item $11000$ XOR $11011 \rightarrow 11$
+                    \item $11101$ XOR $11011 \rightarrow 110$
+                    \item $11001$ XOR $11011 \rightarrow 10$
+                    \item $10000$ XOR $11011 \rightarrow 1011$
+                    \item $10110$ XOR $11011 \rightarrow 1101$
+                \end{enumerate}
+            \item 
+                Then, subtract the remainder (1101) from $101110101010000$ by
+                XOR to get $10111010101101$.
+        \end{enumerate}
+        Then, the transmitted frame is the bit string 10111010101101 and the
+        checksum is 1101.
+    \item (4 marks) Give the ratio of the propagation delay $\tau$ to the frame
+        transmission time $t$ for each of the following wireless (i.e., use the
+        speed of signal propagation through air) networking scenarios (round
+        each answer off to 2 significant figures), and state for each which of
+        ALOHA or CSMA would likely be more appropriate: 
+    \begin{itemize}
+        \item $\approx$ 30 meter distance between nodes, 100 Mbps data rate, 1
+            Kbit frames.\\
+            So if the signal travels at the speed of light to a receiver 30m
+            away then $tau$ is $30m / \num{3.0E8}m/s = \num{1.0E-7}s$\\
+            The frame transmission time is length of time from the the first bit
+            to getting the last bit of a frame onto the network substrate - or,
+            equivalently, the length of time from the first bit until we receive
+            the last bit of a frame.\\
+            In our case, a $1Kb$ over a $100 Mbps$ data rate gives a frame
+            transmission time of $t = \num{1.0E-3}s$\\
+            Then, the ratio of $tau/t = \num{1.0E-7}s / \num{1.0E-3}s =
+            \num{1.0E-4}s$\\
+            
+            This is a small ratio and the value of $tau$ is quite small.  The
+            frame transmission is not so small relative to the propogation
+            delay.  This means that a receiver may be busy for a significant
+            time relative to the time it takes to transmit a message.  Because
+            the propogation delays are small, we could listen in to the activity
+            on our channel to see when we could send - this implies that CSMA
+            may acheive higher efficiencies than ALOHA and should be used in its
+            place.
+        \item $\approx$ 300 meter distance between nodes, 10 Gbps data rate, 4
+            Kbit frames.\\
+            $\tau$ is $300m / \num{3.0E8}m/s = \num{1.0E-6}s$\\ 
+            The frame transmission time $t$ is $4Kb$ over a $10Gbps$ data rate
+            which gives $t = 4Kb / 10Gbps = \num{4.0E-4}s$\\
+            This ratio is $\tau/t = \num{1.0E-6}s / \num{4.0E-4}s =
+            \num{2.5E-2}$\\
+            This relatively larger ratio means that senders can do little to
+            distinguish when the channel is really busy or not because of the
+            large propogation delay.  The decrease transmission time means that
+            receivers are not so busy comparatively.  Here, ALOHA may acheive
+            higher efficiences than CSMA.
+    \end{itemize}
+
+    \item Consider the following graph in which the nodes represent routers, the
+        edges represent links, and the labels indicate the link costs.
+    \begin{enumerate}
+        \item (2 marks) Show the shortest path length estimates after each step
+            when Dijkstra’s algorithm is applied to the above network with node
+            e as the source.\\
+            \begin{tabular}{|lr|l|l|l|l|l|l|l|l|l|} \cline{3-9}
+            \multicolumn{1}{l}{} && \multicolumn{7}{c|}{steps} \\ \cline{3-9}
+            \multicolumn{1}{l}{} & & e & d & g & h & f & b & c \\ \hline
+            \multirow{8}{*}{\begin{sideways}distance to 'e'\end{sideways}}
+            %                           e   d   g   h   f   b   c  
+            & \multicolumn{1}{|r|}{a} & 0 & 0 & 0 & 0 & 0 & 7 & 6 \\ \cline{2-9}
+            & \multicolumn{1}{|r|}{b} & 8 & 4 & 4 & 4 & 4 & - & - \\ \cline{2-9}
+            & \multicolumn{1}{|r|}{c} & 0 & 0 & 8 & 8 & 8 & 5 & - \\ \cline{2-9}
+            & \multicolumn{1}{|r|}{d} & 2 & - & - & - & - & - & - \\ \cline{2-9}
+            & \multicolumn{1}{|r|}{e} & - & - & - & - & - & - & - \\ \cline{2-9}
+            & \multicolumn{1}{|r|}{f} & 6 & 5 & 5 & 4 & - & - & - \\ \cline{2-9}
+            & \multicolumn{1}{|r|}{g} & 2 & - & - & - & - & - & - \\ \cline{2-9}
+            & \multicolumn{1}{|r|}{h} & 0 & 0 & 3 & - & - & - & - \\ \hline
+            \end{tabular}
+
+        \item (2 marks) Suppose now that distance vector routing is used, and
+            that each minute all nodes simultaneously send routing updates to
+            their neighbours. Consider those updates relating to the path
+            lengths to node $e$. Let $Dx(e)$ denote node $x$'s estimate of its
+            shortest path length to node $e$. Each minute, each node $x$ sends
+            $Dx(e)$ to each of its neighbours, and simultaneously receives
+            $Dy(e)$ from each of its neighbour nodes $y$. Node $x$ will then
+            update $Dx(e)$ to the minimum over all neighbours $y$ of $Dy(e)$
+            plus the cost of the link between $x$ and $y$. Supposing that link
+            $e$-$g$ fails, give a table showing the evolution of the $Dx(e)$
+            values for all nodes $x$ (except $e$) until these values stabilize.
+            For the first row of the table, use the shortest path lengths when
+            there are no link failures. Note that because of the assumed
+            synchronous operation, the $Dx(e)$ values in one row will reflect
+            the current link costs together with the $Dy(e)$ values in the
+            previous row.\\
+            \begin{tabular}{|lr|l|l|l|l|l|l|l|l|l|} \cline{3-7}
+            \multicolumn{1}{l}{} && \multicolumn{5}{c|}{steps} \\ \cline{3-7}
+                \multicolumn{1}{l}{} & & 1 & 2 & 3 & 4 & 5 \\ \hline
+            \multirow{8}{*}{\begin{sideways}distance to 'e'\end{sideways}}
+                & \multicolumn{1}{|r|}{Da(e)} & 6 & - & - & - & - \\ \cline{2-7}
+                & \multicolumn{1}{|r|}{Db(e)} & 4 & - & - & - & - \\ \cline{2-7}
+                & \multicolumn{1}{|r|}{Dc(e)} & 5 & - & - & - & - \\ \cline{2-7}
+                & \multicolumn{1}{|r|}{Dd(e)} & 2 & - & - & - & - \\ \cline{2-7}
+                & \multicolumn{1}{|r|}{De(e)} & - & - & - & - & - \\ \cline{2-7}
+                & \multicolumn{1}{|r|}{Df(e)} & 4 & - & - & 5 & 5 \\ \cline{2-7}
+                & \multicolumn{1}{|r|}{Dg(e)} & 2 & 3 & 3 & 5 & 7 \\ \cline{2-7}
+                & \multicolumn{1}{|r|}{Dh(e)} & 3 & 3 & 4 & 4 & 6 \\ \hline
+            \end{tabular}
+
+    \end{enumerate}
+\end{enumerate}
+
+
+\end{document}
