@@ -63,12 +63,56 @@ Part B
         former case, state which next hop router. Make sure you justify your
         answers.
 
+        \begin{verbatim}
+        Entry 1:
+        address prefix: 10.11.43.128/26
+            address: 00001010 00001011 00011011 10000000
+            mask:    11111111 11111111 11111111 11000000
+            prefix:  00001010 00001011 00011011 10000000
+        address of next hop router: 10.11.32.7
+        interface: A
+        Entry 2:
+        address prefix: 0.0.0.0/0
+        address of next hop router: 10.11.0.73
+        interface: B
+        Entry 3:
+        address prefix: 10.11.42.0/23 
+        address of next hop router: 10.11.47.127
+            address: 00001010 00001011 00011010 00000000
+            mask:    11111111 11111111 11111110 00000000
+            prefix:  00001010 00001011 00011010 00000000
+        interface: A
+        Entry 4:
+        address prefix: 10.11.32.0/20
+            address: 00001010 00001011 00010000 00000000
+            mask:    11111111 11111111 11110000 00000000
+            prefix:  00001010 00001011 00010000 00000000
+        interface: A
+        \end{verbatim}
+        
         \begin{enumerate}
             \item 10.11.43.127\\
+                00001010 00001011 00011011 01111111\\
+                This address does not match the prefix of Entry 1.  It does
+                match with Entry 3 and 4.  However, it has a longer match Entry
+                3 than with entry 4.  Therefore it will be forwarded to the next
+                hop router at 10.11.47.127 over interface A.
             \item 10.11.43.160\\
+                00001010 00001011 00011011 10100000\\
+                This address matches the prefix of Entry 1.  It will be
+                forwarded to the next hop router at 10.11.32.7 over interface A.
             \item 10.11.49.123\\
+                00001010 00001011 00011011 01111011\\
+                This doesn't match Entry 1.  It has its longest prefix match
+                with Entry 3, though it matches 4 as well.  It will be forwarded
+                to the next hop router at 10.11.47.127 over interface A. 
             \item 10.11.44.222\\
+                00001010 00001011 00011011 11011110\\
+                This address has its longest prefix match with entry 3.  It will
+                be forwarded to the next hop router at 10.11.47.127 over
+                interface A. 
         \end{enumerate} 
+
     \item (2 marks) A TCP sender’s value of SRTT is 125 milliseconds, but then a
         routing change occurs, after which all measured RTTs are 80
         milliseconds. How many measurements of the new RTT are required before
@@ -122,6 +166,61 @@ Part B
         the same weights are used as in question 3 when updating SRTT, and
         weights of 0.25 (new sample) and 0.75 (old value) when updating RTTVAR.
         Make sure to show how you got your answer.
+
+        The formula for calculating the \textit{SRTT} based on rount-trip times is:
+        \[ SRTT = \alpha SRTT + (1-\alpha) * R \]
+        For calculating \textit{RTTVAR}, we use:
+        \[ RTTVAR = \beta RTTVAR + (1-\beta) * |SRTT - R| \]
+        Then, we set the retransmission time \textit{RTO} as 
+        \[ RTO = SRTT + 4*RTTVAR \]
+
+        A timeout will be caused if the measured RTT is greater than the RTO.
+
+        If we were to script a solution to this, part of it would look like...
+
+        \begin{lstlisting}[language=python]
+        # Run simulation for increasing values of N
+        for n in range(1, 20):
+            print("***** N = " + str(n) + " *****")
+            print('{:8}{:14}{:14}{:14}{:14}'
+                .format("N", "RTT", "SRTT", "RTT_VAR", "RTO"))
+            for i in range(WARMUP + TEST):
+                rtt = get_rtt(i, n, RTT, N_RTT)
+                # Record the value of N when a timeout occurs
+                # But only after warmup iterations have expired
+                if (i >= WARMUP and rtt > rto):
+                    print(" ***** !!!TIMEOUT OCCURRED!!! (N = " 
+                        + str(n) + ") ***** ")
+                srtt = new_srtt(srtt, ALPHA, rtt)
+                rttvar = new_rttvar(rttvar, srtt, BETA, rtt)
+                rto = new_rto(srtt, rttvar)
+                print('{:<8d}{:<14f}{:<14f}{:<14f}{:<14f}'
+                    .format(i, rtt, srtt, rttvar, rto))
+        \end{lstlisting}
+
+        ... and then run it, we would find that values of N greater than 5 cause
+        timeouts to fire.  Here is a sample of the output:
+
+        \begin{verbatim}
+        ...
+        ***** N = 6 *****
+        ...
+        N       RTT           SRTT          RTT_VAR       RTO       
+        95      125.000000    168.618326    70.823094     451.910702
+        96      500.000000    210.041035    125.607062    712.469282
+        97      125.000000    199.410906    112.808023    650.642997
+        98      125.000000    190.109543    100.883403    593.643154
+        99      125.000000    181.970850    89.905264     541.591908
+        100     125.000000    174.849494    79.891322     494.414781
+        101     125.000000    168.618307    70.823068     451.910579
+         ***** !!!TIMEOUT OCCURRED!!! (N = 6) *****
+        102     500.000000    210.041018    125.607046    712.469204
+        ...
+        \end{verbatim}
+
+    Here we can see that on iteration 102 an RTT of 500ms is measured, but the
+    RTO we had set was only 451ms.  This would cause a retransmission timeout to
+    fire.
 
     \item (14 marks) Suppose that a sender using TCP Reno is observed to have
         the following congestion window sizes, as measured in segments, during
