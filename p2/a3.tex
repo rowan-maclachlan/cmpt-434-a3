@@ -6,9 +6,10 @@
 \usepackage{amsthm}
 \usepackage[T1]{fontenc}
 \usepackage{geometry}
-\usepackage{siunitx}
 \usepackage{multirow} % These packages are used for rendering adjacency matrices
 \usepackage{rotating} 
+\usepackage{listings}
+\usepackage[detect-weight=true, binary-units=true]{siunitx}
 \sisetup{output-exponent-marker=\ensuremath{\mathrm{e}}}
 
 \geometry{
@@ -20,132 +21,146 @@
 \newtheorem*{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}
 \calclayout
-\begin{document} \textbf{CMPT 434 Assignment 2} \\ Winter 2019\\
-Due Date: Monday January 11th\\
+\begin{document} \textbf{CMPT 434 Assignment 3} \\ Winter 2019\\
+Due Date: Monday March 18th\\
 rdm659 11165820
 
 Part B
 
 \begin{enumerate}
-    \item (2 marks) Give the checksum for 10111010101 using CRC with
-        generator 11011.\\
-        $m = 10111010101$, $r = 4$, $G = 11011$\\
-        We want to add $r$ (4) bits to $m$ such that $0 = (m / G)$
-        Then, we need to calculate the remainder from dividing $G$ into $m + r$,
-        and add that remainder to the transmitted frame before sending it.\\
+    \item (2 marks) Give the parameters of a token bucket that limits the long
+        term average rate to 40 Mbps (i.e., $\num{40E6}$ bits per second) and the
+        maximum duration of back-to-back packet transmissions to 500
+        microseconds, assuming a link of capacity of 1 Gbps.
+
+        Parameters of a token bucket are $B$, the capacity of the bucket, and
+        $R$, the rate at which new tokens are 'added' or 'dispensed'.
+
+        If we want to limit the long term average rate to 40 Mbps, then we
+        should set $R = 40 Mbps$ to prevent the sender from ejecting more than
+        40 Mb a second.
+
+        If we want to limit the maximum duration of back to back packet
+        transmission to 500 Microseconds, then we want our bucket to run out of
+        tokens after 500 microseconds of consuming them at 1 Gbps.  We can use
+        the following formula to calculate $B$:
+        \[ B + RS = MS \]
+        where $M$ is $\num{1E9}\si{\bit\per\second}$, $R$ is
+        $\num{40E6}\si{\bit\per\second}$, and $S$ is
+        $\num{5.0E-4}\si{\second}$.  To solve for $B$, the capacity of the bucket, we can re-write our
+        formula as $B = MS - RS \iff B = S(M-R)$.  This gives:\\
+         \[ B = \num{5.0E-4}\si{\second} (\num{1.0E9} \si{\bit\per\second} -
+         \num{4.0E7} \si{\bit\per\second}) \]
+         \[ B = \num{5.0E-4}\si{\second} * \num{9.6 E8} \si{\bit\per\second} \]
+         \[ B = \num{4.8E5}\si{\bit} \]
+        Here, we see that a token bucket with parameter of $R = 40
+        \si{\mega\bit\per\second}$ and $B = 480000\si{\bit}$ achieves this.
+
+    \item (8 marks) For each of the following destination IP addresses, state whether an
+        incoming IP datagram would be forwarded on an outgoing interface using a
+        destination link layer address belonging to a next hop router, or a link
+        layer address belonging to the IP datagram’s destination host. In the
+        former case, state which next hop router. Make sure you justify your
+        answers.
+
         \begin{enumerate}
-            \item Add $r$ zeroes to $m$\\
-                $m+r \rightarrow 101110101010000$
-            \item Divide $G$ into $m+r$\\
-                $11011 / 101110101010000$ gives remainder 1011:\\
-                \begin{enumerate}
-                    \item $10111$ XOR $11011 \rightarrow 1100$
-                    \item $11000$ XOR $11011 \rightarrow 11$
-                    \item $11101$ XOR $11011 \rightarrow 110$
-                    \item $11001$ XOR $11011 \rightarrow 10$
-                    \item $10000$ XOR $11011 \rightarrow 1011$
-                    \item $10110$ XOR $11011 \rightarrow 1101$
-                \end{enumerate}
-            \item 
-                Then, subtract the remainder (1101) from $101110101010000$ by
-                XOR to get $10111010101101$.
-        \end{enumerate}
-        Then, the transmitted frame is the bit string 10111010101101 and the
-        checksum is 1101.
-    \item (4 marks) Give the ratio of the propagation delay $\tau$ to the frame
-        transmission time $t$ for each of the following wireless (i.e., use the
-        speed of signal propagation through air) networking scenarios (round
-        each answer off to 2 significant figures), and state for each which of
-        ALOHA or CSMA would likely be more appropriate: 
-    \begin{itemize}
-        \item $\approx$ 30 meter distance between nodes, 100 Mbps data rate, 1
-            Kbit frames.\\
-            So if the signal travels at the speed of light to a receiver 30m
-            away then $tau$ is $30m / \num{3.0E8}m/s = \num{1.0E-7}s$\\
-            The frame transmission time is length of time from the the first bit
-            to getting the last bit of a frame onto the network substrate - or,
-            equivalently, the length of time from the first bit until we receive
-            the last bit of a frame.\\
-            In our case, a $1Kb$ over a $100 Mbps$ data rate gives a frame
-            transmission time of $t = \num{1.0E-3}s$\\
-            Then, the ratio of $tau/t = \num{1.0E-7}s / \num{1.0E-3}s =
-            \num{1.0E-4}s$\\
+            \item 10.11.43.127\\
+            \item 10.11.43.160\\
+            \item 10.11.49.123\\
+            \item 10.11.44.222\\
+        \end{enumerate} 
+    \item (2 marks) A TCP sender’s value of SRTT is 125 milliseconds, but then a
+        routing change occurs, after which all measured RTTs are 80
+        milliseconds. How many measurements of the new RTT are required before
+        SRTT drops below 100 milliseconds? Assume that a weight of 0.125 is used
+        for the new sample, and a weight of 0.875 for the old value, when
+        updating SRTT. Make sure to show how you got your answer.
+
+        The formula for calculating the SRTT based on rount-trip times is:
+        \[ SRTT = \alpha SRTT + (1-\alpha) * R \]
+
+        If we were to script a solution to this...
+
+        \begin{lstlisting}[language=python]
+            ALPHA = 7/8
+            INITIAL_SRTT = 125
             
-            This is a small ratio and the value of $tau$ is quite small.  The
-            frame transmission is not so small relative to the propogation
-            delay.  This means that a receiver may be busy for a significant
-            time relative to the time it takes to transmit a message.  Because
-            the propogation delays are small, we could listen in to the activity
-            on our channel to see when we could send - this implies that CSMA
-            may acheive higher efficiencies than ALOHA and should be used in its
-            place.
-        \item $\approx$ 300 meter distance between nodes, 10 Gbps data rate, 4
-            Kbit frames.\\
-            $\tau$ is $300m / \num{3.0E8}m/s = \num{1.0E-6}s$\\ 
-            The frame transmission time $t$ is $4Kb$ over a $10Gbps$ data rate
-            which gives $t = 4Kb / 10Gbps = \num{4.0E-4}s$\\
-            This ratio is $\tau/t = \num{1.0E-6}s / \num{4.0E-4}s =
-            \num{2.5E-2}$\\
-            This relatively larger ratio means that senders can do little to
-            distinguish when the channel is really busy or not because of the
-            large propogation delay.  The decrease transmission time means that
-            receivers are not so busy comparatively.  Here, ALOHA may acheive
-            higher efficiences than CSMA.
-    \end{itemize}
+            def new_srtt(old_srtt, alpha, r):
+                return alpha*old_srtt + (1-alpha)*r
+            
+            i = 0
+            srtt = INITIAL_SRTT
+            while(srtt > 100):
+                print("Iteration " + str(i) + ": " + str(srtt))
+                srtt = new_srtt(srtt, ALPHA, 80)
+                i += 1
+            
+            print("Iteration " + str(i) + ": " + str(srtt))
+        \end{lstlisting}
 
-    \item Consider the following graph in which the nodes represent routers, the
-        edges represent links, and the labels indicate the link costs.
-    \begin{enumerate}
-        \item (2 marks) Show the shortest path length estimates after each step
-            when Dijkstra’s algorithm is applied to the above network with node
-            e as the source.\\
-            \begin{tabular}{|lr|l|l|l|l|l|l|l|l|l|} \cline{3-9}
-            \multicolumn{1}{l}{} && \multicolumn{7}{c|}{steps} \\ \cline{3-9}
-            \multicolumn{1}{l}{} & & e & d & g & h & f & b & c \\ \hline
-            \multirow{8}{*}{\begin{sideways}distance to 'e'\end{sideways}}
-            %                           e   d   g   h   f   b   c  
-            & \multicolumn{1}{|r|}{a} & 0 & 0 & 0 & 0 & 0 & 7 & 6 \\ \cline{2-9}
-            & \multicolumn{1}{|r|}{b} & 8 & 4 & 4 & 4 & 4 & - & - \\ \cline{2-9}
-            & \multicolumn{1}{|r|}{c} & 0 & 0 & 8 & 8 & 8 & 5 & - \\ \cline{2-9}
-            & \multicolumn{1}{|r|}{d} & 2 & - & - & - & - & - & - \\ \cline{2-9}
-            & \multicolumn{1}{|r|}{e} & - & - & - & - & - & - & - \\ \cline{2-9}
-            & \multicolumn{1}{|r|}{f} & 6 & 5 & 5 & 4 & - & - & - \\ \cline{2-9}
-            & \multicolumn{1}{|r|}{g} & 2 & - & - & - & - & - & - \\ \cline{2-9}
-            & \multicolumn{1}{|r|}{h} & 0 & 0 & 3 & - & - & - & - \\ \hline
-            \end{tabular}
+        ... and then run it, we would get the following output, showing that it
+        would take 8 iterations to bring the value of SRTT below 80:
 
-        \item (2 marks) Suppose now that distance vector routing is used, and
-            that each minute all nodes simultaneously send routing updates to
-            their neighbours. Consider those updates relating to the path
-            lengths to node $e$. Let $Dx(e)$ denote node $x$'s estimate of its
-            shortest path length to node $e$. Each minute, each node $x$ sends
-            $Dx(e)$ to each of its neighbours, and simultaneously receives
-            $Dy(e)$ from each of its neighbour nodes $y$. Node $x$ will then
-            update $Dx(e)$ to the minimum over all neighbours $y$ of $Dy(e)$
-            plus the cost of the link between $x$ and $y$. Supposing that link
-            $e$-$g$ fails, give a table showing the evolution of the $Dx(e)$
-            values for all nodes $x$ (except $e$) until these values stabilize.
-            For the first row of the table, use the shortest path lengths when
-            there are no link failures. Note that because of the assumed
-            synchronous operation, the $Dx(e)$ values in one row will reflect
-            the current link costs together with the $Dy(e)$ values in the
-            previous row.\\
-            \begin{tabular}{|lr|l|l|l|l|l|l|l|l|l|} \cline{3-7}
-            \multicolumn{1}{l}{} && \multicolumn{5}{c|}{steps} \\ \cline{3-7}
-                \multicolumn{1}{l}{} & & 1 & 2 & 3 & 4 & 5 \\ \hline
-            \multirow{8}{*}{\begin{sideways}distance to 'e'\end{sideways}}
-                & \multicolumn{1}{|r|}{Da(e)} & 6 & - & - & - & - \\ \cline{2-7}
-                & \multicolumn{1}{|r|}{Db(e)} & 4 & - & - & - & - \\ \cline{2-7}
-                & \multicolumn{1}{|r|}{Dc(e)} & 5 & - & - & - & - \\ \cline{2-7}
-                & \multicolumn{1}{|r|}{Dd(e)} & 2 & - & - & - & - \\ \cline{2-7}
-                & \multicolumn{1}{|r|}{De(e)} & - & - & - & - & - \\ \cline{2-7}
-                & \multicolumn{1}{|r|}{Df(e)} & 4 & - & - & 5 & 5 \\ \cline{2-7}
-                & \multicolumn{1}{|r|}{Dg(e)} & 2 & 3 & 3 & 5 & 7 \\ \cline{2-7}
-                & \multicolumn{1}{|r|}{Dh(e)} & 3 & 3 & 4 & 4 & 6 \\ \hline
-            \end{tabular}
+        Iteration 0: 125\\
+        Iteration 1: 119.375\\
+        Iteration 2: 114.453125\\
+        Iteration 3: 110.146484375\\
+        Iteration 4: 106.378173828125\\
+        Iteration 5: 103.08090209960938\\
+        Iteration 6: 100.1957893371582\\
+        Iteration 7: 97.67131567001343\\
 
+    \item (2 marks) Suppose that a TCP connection’s RTT is 125 milliseconds
+        except for every N’th RTT, which is 500 milliseconds. Note that if N is
+        sufficiently large, the 500 millisecond RTT will cause a timeout, since
+        that RTT value will be highly “unexpected” (assume here that RTOmin is
+        less than 500 milliseconds), while if N is sufficiently small, it won’t
+        cause a timeout. What is the largest N for which the 500 millisecond RTT
+        won’t cause a timeout? (Consider only the behavior after there have been
+        many measured RTTs following this pattern, and the initial values chosen
+        for SRTT and RTTVAR no longer have any significant impact.) Assume that
+        the same weights are used as in question 3 when updating SRTT, and
+        weights of 0.25 (new sample) and 0.75 (old value) when updating RTTVAR.
+        Make sure to show how you got your answer.
+
+    \item (14 marks) Suppose that a sender using TCP Reno is observed to have
+        the following congestion window sizes, as measured in segments, during
+        each transmission “round” spent in slow start or additive increase
+        mode...
+
+        \begin{enumerate}
+            \item Identify the transmission rounds when TCP is in slow start
+                mode.\\
+                rounds 1-7, rounds 22-26
+            \item After the 13th transmission round, is segment loss detected by
+                a triple duplicate ACK or by a timeout?\\
+                By a triple duplicate ACK, as the \textit{cwnd} was cut only in
+                half.
+            \item After the 20th transmission round, is segment loss detected by
+                a triple duplicate ACK or by a timeout?\\
+                After round 21, segment loss is detected by a timeout.  This can
+                be determined by observing that \textit{cwnd} has fallen to 1 in
+                round 22.
+            \item What is the initial value of the slow start threshold ssthresh
+                at the first transmission round?\\
+                This value must be 64, as that is the value of \textit{cwnd}
+                after which additive increase begins at round 8.
+            \item What is the value of ssthresh at the 18th transmission
+                round?\\
+                Assuming \textit{ssthresh} is updated to be equal to the last
+                highest value of \textit{cwnd} acheived before packet loss,
+                \textit{ssthresh} must be 70.
+            \item What is the value of ssthresh at the 24th transmission
+                round?\\
+                \textit{ssthresh} was likely updated to a value of 42 after
+                packet loss was detected in round 21 with \textit{cwnd} equal to
+                42.
+            \item Assuming that a segment loss is detected after the 26th round
+                by the receipt of a triple duplicate ACK, what will be the new
+                value of ssthresh and cwnd?\\
+                \textit{ssthresh} will be set to 16, the last highest value of
+                \textit{cwnd} before packet loss, and \textit{cwnd} will be set
+                to 8, half the previous value of \textit{cwnd}.
+        \end{enumerate}
     \end{enumerate}
-\end{enumerate}
-
-
 \end{document}
