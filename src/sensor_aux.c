@@ -67,6 +67,8 @@ int send_id_msg(int sockfd, struct sensor *s) {
         perror("sensor: send (ID)");
         return -1;
     }
+
+    return 0;
 }
 
 int send_data_msg(int sockfd, struct sensor *s) {

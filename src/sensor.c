@@ -36,7 +36,7 @@ struct timeval poll_val = { 1, 0 };
 
 int connect_loop(char *logger_hostname, char *logger_port) {
     int myfd, loggerfd, sensorfd;
-    fd_set master_set;
+    // fd_set master_set;
 
     while(1) {
         sleep(1);
@@ -44,10 +44,9 @@ int connect_loop(char *logger_hostname, char *logger_port) {
         move(DISTANCE, get_random_direction(), &me.p);
 
         // open up for connections with other sensors
-        if (-1 == (myfd = server_connect_with(me.port))) {
-            fprintf(stderr, "sensor: failed to listen for incoming connections.\n");
-            goto _done;
-        }
+        // if (-1 == (myfd = server_connect_with(me.port))) {
+        //     fprintf(stderr, "sensor: failed to listen for incoming connections.\n");
+        // }
 
         // open connection
         if (-1 == (loggerfd = client_connect_to(logger_hostname, logger_port))) {
@@ -56,15 +55,15 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             return -1;
         }
 
-        FD_ZERO(&master_set);
-        FD_SET(myfd, &master_set);
-        FD_SET(loggerfd, &master_set);
-        int maxfd = loggerfd > myfd ? loggerfd : myfd;
+        //FD_ZERO(&master_set);
+        //FD_SET(myfd, &master_set);
+        //FD_SET(loggerfd, &master_set);
+        //int maxfd = loggerfd > myfd ? loggerfd : myfd;
 
-        if (-1 == select(maxfd+1, &master_set, NULL, NULL, &poll_val)) {
-            perror("sensor: select\n");
-            goto _done;
-        }
+        //if (-1 == select(maxfd+1, &master_set, NULL, NULL, &poll_val)) {
+        //    perror("sensor: select\n");
+        //    goto _done;
+        //}
 
         if (-1 == send_id_msg(loggerfd, &me)) {
             goto _done;
@@ -103,9 +102,7 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             }
             
             // open tcp with s
-            char their_ip[17] = { 0 };
-            get_hostname_from(their_ip, &s.host);
-            if(-1 == (sensorfd = client_connect_to(their_ip, s.port))) {
+            if(-1 == (sensorfd = client_connect_to(s.ip, s.port))) {
                 fprintf(stderr, "sensor %d: Failed to open connection to sensor %d", me.id, s.id);
                 goto _done;
             }

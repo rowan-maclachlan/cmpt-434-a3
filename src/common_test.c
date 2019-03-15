@@ -19,21 +19,20 @@
 
 void save_sensor_tests() {
     struct sensor sensor;
-    struct sockaddr addr;
+    enum ip_type ip_type = IPV4;
+    char ip[INET6_ADDRSTRLEN] = "::ffff:172.16.1.76";
     int port = 123;
     int id = 321;
     position p = { 987, 789 };
-    addr.sa_family = AF_INET;
-    addr.sa_data[0] = 1;
 
-    save_sensor(&sensor, &addr, port, id, p);
+    save_sensor(&sensor, ip_type, ip, port, id, p);
 
     assert(0 == strcmp(sensor.port, "123"));
     assert(sensor.id == id);
     assert(sensor.p.x = 987);
     assert(sensor.p.y = 789);
-    assert(sensor.host.sa_family == AF_INET);
-    assert(sensor.host.sa_data[0] == 1);
+    assert(sensor.ip_type == IPV4);
+    assert(0 == strcmp(sensor.ip, ip));
 }
 
 int main(void) {

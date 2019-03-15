@@ -21,9 +21,9 @@
 #define HOSTNAME_SIZE 64
 #define MAX_SENSORS 64
 
-enum active {
-    INACTIVE,
-    ACTIVE
+enum ip_type {
+    IPV4 = 1,
+    IPV6 = 2
 };
 
 struct sensor {
@@ -31,18 +31,24 @@ struct sensor {
     position p;
     char payload[PAYLOAD_SIZE];
     char port[PORT_SIZE]; // What port does this sensor listen on?
-    struct sockaddr host; // What is this sensors's network address?
+    enum ip_type ip_type;      // What is the type of the IP address?
+    char ip[INET6_ADDRSTRLEN]; // What is this sensors's network address?
     bool rcvd;   // Has this sensors's message been received?
     bool active;   // Is this sensor active in the simulation?
 };
 
 void print_bytes(char *buf, int len);
 
+void print_string(char *buf, int len);
+
+enum ip_type get_ip_type(sa_family_t sa_ft);
+
 /* 
  * Copy the data arguments into the sensor struct (must be allocated)
  */
 void save_sensor(struct sensor *sensor, 
-                 struct sockaddr *their_addr,
+                 enum ip_type,
+                 char *ip,
                  int their_port, 
                  int their_id, 
                  position their_position);

@@ -13,7 +13,7 @@
 
 #define INFO_MSG_SIZE 32
 #define REQUEST_MSG_SIZE 64
-#define CONTACT_MSG_SIZE 64
+#define CONTACT_MSG_SIZE 128
 #define ID_MSG_SIZE 64
 #define CONF_MSG_SIZE 64
 #define DATA_MSG_SIZE 64

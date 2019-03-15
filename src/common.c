@@ -32,31 +32,33 @@ void print_bytes(char *buf, int len) {
     printf("\n");
 }
 
+void print_string(char *buf, int len) {
+    for (int i = 0; i < len; i++) {
+        if ('\0' == buf[i]) {
+            printf("%c", '*');
+        } else {
+            printf("%c", buf[i]);
+        }
+    }
+    printf("\n");
+}
+
+enum ip_type get_ip_type(sa_family_t sa_ft) {
+    return sa_ft == AF_INET ? IPV4 : IPV6;
+}
+
 void save_sensor(struct sensor *sensor, 
-                 struct sockaddr *their_addr,
+                 enum ip_type ip_type,
+                 char *their_addr,
                  int their_port, 
                  int their_id, 
                  position their_position) {
     sensor->id = their_id;
     sensor->p = their_position;
     sprintf(sensor->port, "%d", their_port);
-    memcpy(&sensor->host, their_addr, sizeof (struct sockaddr));
-    sensor->active = ACTIVE;
-}
-
-/* Copy the ip from the sockaddr host into the buffer 'their_ip' */
-void get_hostname_from(char *their_ip, struct sockaddr *host) {
-    struct sockaddr_storage *ss = (struct sockaddr_storage*)&host;
-    struct sockaddr_in *ss4 = (struct sockaddr_in*)&host;
-    struct sockaddr_in6 *ss6 = (struct sockaddr_in6*)&host;
-    if (ss->ss_family == AF_INET) { // IPv4 address
-        bcopy((void*)ss4->sin_addr.s_addr, their_ip, sizeof(ss4->sin_addr.s_addr));
-        their_ip[sizeof(ss4->sin_addr.s_addr)] = '\0';
-    }
-    else { // IPv6
-        bcopy(ss6->sin6_addr.s6_addr, their_ip, sizeof(ss6->sin6_addr.s6_addr));
-        their_ip[sizeof(ss6->sin6_addr.s6_addr)] = '\0';
-    }
+    sensor->ip_type = ip_type;
+    strncpy(sensor->ip, their_addr, INET6_ADDRSTRLEN);
+    sensor->active = true;
 }
 
 int server_connect_with(char *port) {
@@ -71,7 +73,7 @@ int server_connect_with(char *port) {
 	hints.ai_flags = AI_PASSIVE;
 
 	if ((status = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
-		perror("server: getaddrinfo");
+		perror("getaddrinfo");
 		return 1;
 	}
 
@@ -82,7 +84,7 @@ int server_connect_with(char *port) {
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype,
 				p->ai_protocol)) == -1) {
-			perror("server: socket");
+			perror("socket");
 			continue;
 		}
 
@@ -94,7 +96,7 @@ int server_connect_with(char *port) {
 
 		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
 			close(sockfd);
-			perror("server: bind");
+			perror("bind");
 			continue;
 		}
 
@@ -102,7 +104,7 @@ int server_connect_with(char *port) {
 	}
 
     if (p == NULL) {
-        fprintf(stderr, "server: failed to bind to valid addrinfo");
+        fprintf(stderr, "failed to bind to valid addrinfo\n");
         return -1;
     }
 
@@ -153,14 +155,6 @@ int client_connect_to(char *host, char *port) {
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
     printf("sensor: connecting to %s on socket %d\n", s, sockfd);
 
-    // copy p -> dest
-    //memcpy(dest, p, sizeof (*dest)); 
-    //dest->ai_addr = malloc(sizeof(struct sockaddr));
-    //dest->ai_addr->sa_family = p->ai_addr->sa_family;
-    //strcpy(dest->ai_addr->sa_data, p->ai_addr->sa_data);
-    //dest->ai_canonname = NULL;
-    //dest->ai_next = NULL;
-    
     // Free unused server info structs
     freeaddrinfo(servinfo);
 

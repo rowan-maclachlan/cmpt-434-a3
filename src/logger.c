@@ -97,7 +97,8 @@ int listen_loop(int sockfd, int num_nodes) {
         deserialize_id_msg(ID_MSG_BUF, &their_id, &their_port, &their_position);
 
         save_sensor(&(sensors[their_id]),
-                    (struct sockaddr *)&their_addr, 
+                    get_ip_type(their_addr.ss_family),
+                    s, 
                     their_port, their_id, their_position);
         
         // send confirmation message
@@ -129,6 +130,8 @@ int listen_loop(int sockfd, int num_nodes) {
                 goto _done;
             }
 
+            log_data_msg("logger", DATA_MSG_BUF);
+
             strncpy(sensors[their_id].payload, PAYLOAD, PAYLOAD_SIZE);
 
             if (sensors[their_id].rcvd) {
@@ -144,31 +147,36 @@ int listen_loop(int sockfd, int num_nodes) {
             int closer = their_id;
             for (int i = 0; i < MAX_SENSORS; i++) {
                 struct sensor s = sensors[i];
-                if (s.active == INACTIVE) {
+                if (!s.active) {
                     continue;
                 }
-                if (closest(&BASE_STATION, &s.p, &sensors[closer].p)
-                  && in_range(TRANS_RANGE, &s.p, &sensors[closer].p)) {
+                if (closest(&BASE_STATION, &s.p, &sensors[closer].p) // closer than curr
+                  && in_range(TRANS_RANGE, &s.p, &sensors[their_id].p) // in range of orig
+                  && !s.rcvd) { // not yet done transmitting
+                    // make sure the sensor node is in range of me, 
+                    // closer than me to the base station, and not
+                    // already done transmitting
                     closer = i;
                 }
             }
             if (0 >= serialize_contact_msg(CONTACT_MSG_BUF, &sensors[closer])) {
-                fprintf(stderr, "logger: failed to serialize confirmation message.\n");
+                fprintf(stderr, "logger: failed to serialize contact message.\n");
                 goto _done;
             }
             if (0 >= send(sensorfd, CONTACT_MSG_BUF, CONTACT_MSG_SIZE, 0)) {
-                perror("logger: send (CONF_MSG)");
+                perror("logger: send (CONTACT_MSG)");
                 goto _done;
             }
 
             char INFO_MSG_BUF[INFO_MSG_SIZE] = { 0 };
             // TODO receive as many logs as arrive (INFO messages)
-            if (0 >= recv(sensorfd, INFO_MSG_BUF, INFO_MSG_SIZE, 0)) {
-                perror("logger: recv (INFO)");
-                goto _done;
+            if (closer != their_id) {
+                if (0 >= recv(sensorfd, INFO_MSG_BUF, INFO_MSG_SIZE, 0)) {
+                    perror("logger: recv (INFO)");
+                    goto _done;
+                }
+                log_info_msg(INFO_MSG_BUF);
             }
-
-            log_info_msg(INFO_MSG_BUF);
         }
 
 _done: 
