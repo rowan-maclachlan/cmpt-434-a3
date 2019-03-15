@@ -103,7 +103,11 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             
             // open tcp with s
             if(-1 == (sensorfd = client_connect_to(s.ip, s.port))) {
-                fprintf(stderr, "sensor %d: Failed to open connection to sensor %d", me.id, s.id);
+                fprintf(stderr, "sensor %d: Failed to open connection to sensor %d\n", me.id, s.id);
+                // log communication to logger process
+                if (0 > send_info_msg(loggerfd, me.id, me.id, me.id)) {
+                    goto _done;
+                }
                 goto _done;
             }
 
@@ -117,13 +121,11 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             if (0 > send_info_msg(loggerfd, me.id, s.id, me.id)) {
                 goto _done;
             }
-
         }
 
 _done:  
         close(loggerfd);
         close(sensorfd);
-
     }
 
     return 0;

@@ -12,11 +12,20 @@
 
 #include "distance.h"
 
+/*
+ * distance calculation for a toroid:
+ * sqrt(min(|x1 - x2|, w - |x1 - x2|)^2 + min(|y1 - y2|, h - |y1 - y2|)^2)
+ */
+int dist(position *p1, position *p2) {
+    int sqr_dist_x = pow(fmin(abs(p1->x - p2->x), (U_RIGHT - abs(p1->x - p2->x))), 2);
+    int sqr_dist_y = pow(fmin(abs(p1->y - p2->y), (U_LEFT - abs(p1->y - p2->y))), 2);
+    return floor(sqrt(sqr_dist_x + sqr_dist_y));
+}
+
 /* Returns true if a is strictly closer to 'to' than b */
 bool closest(position *to, position *a, position *b) {
-    int dist_to_a = floor(sqrt( pow((a->x - to->x), 2) + pow((a->y - to->y), 2)));
-    int dist_to_b = floor(sqrt( pow((b->x - to->x), 2) + pow((b->y - to->y), 2)));
-
+    int dist_to_a = dist(a, to);
+    int dist_to_b = dist(b, to);
     return dist_to_a < dist_to_b;
 }
 
@@ -26,7 +35,7 @@ bool closest(position *to, position *a, position *b) {
  * squaring their position's differences, and comparing that value to T.
  */
 bool in_range(int T, position *p1, position *p2) {
-    return floor(sqrt( pow((p1->x - p2->x), 2) + pow((p1->y - p2->y), 2))) <= T;
+    return dist(p1, p2) <= T;
 }
 
 /*

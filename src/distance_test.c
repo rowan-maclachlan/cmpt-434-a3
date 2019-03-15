@@ -29,6 +29,16 @@ void closest_test() {
     b.y = 101;
 
     assert(!closest(&to, &a, &b));
+
+    // wrap around
+    to.x = 900;
+    to.y = 900;
+    a.x = 10;
+    a.y = 10;
+    b.x = 700;
+    b.y = 700;
+
+    assert(closest(&to, &a, &b));
 }
 
 void in_range_test() {
@@ -53,6 +63,13 @@ void in_range_test() {
     p1.y = 400;
 
     assert(!in_range(T, &p1, &p2));
+
+    p1.x = 1;
+    p1.y = 1;
+    p2.x = 999;
+    p2.y = 999;
+
+    assert(in_range(T, &p1, &p2));
 }
 
 void move_test() {
