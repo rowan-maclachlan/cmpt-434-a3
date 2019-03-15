@@ -1,4 +1,4 @@
-/* 
+/*
  * Rowan MacLachlan
  * rdm695 11165820
  * CMPT 434 Eager
@@ -10,9 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <unistd.h> 
-#include <errno.h> 
-#include <string.h> 
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include <netdb.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -69,14 +69,14 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             goto _done;
         }
 
-        bool conf = false;
+        unsigned int conf = 0;
         if (0 > recv_conf_msg(loggerfd, &conf)) {
             goto _done;
         }
-        
+
         // if in range, send data msg
         // TODO we should send ALL messages we are carrying
-        if (conf) {
+        if (1 == conf) {
             if (0 > send_data_msg(loggerfd, &me)) {
                 goto _done;
             }
@@ -90,9 +90,10 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             char CONTACT_MSG_BUF[CONTACT_MSG_SIZE] = { 0 };
             if (0 >= recv(loggerfd, CONTACT_MSG_BUF, CONTACT_MSG_SIZE, 0)) {
                 perror("sensor: recv (CONTACT)");
+                fprintf(stderr, "Invalid loggerfd: %d\n", loggerfd);
                 goto _done;
             }
-            
+
             deserialize_contact_msg(CONTACT_MSG_BUF, &s);
             memcpy(&sensors[s.id], &s, sizeof(s));
 
@@ -100,7 +101,7 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             if (me.id == s.id) {
                 goto _done;
             }
-            
+
             // open tcp with s
             if(-1 == (sensorfd = client_connect_to(s.ip, s.port))) {
                 fprintf(stderr, "sensor %d: Failed to open connection to sensor %d\n", me.id, s.id);
@@ -123,7 +124,7 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             }
         }
 
-_done:  
+_done:
         close(loggerfd);
         close(sensorfd);
     }
@@ -133,12 +134,12 @@ _done:
 }
 
 /*
- * argv should contain: 
- *  uint32 id, 
- *  char *data, 
+ * argv should contain:
+ *  uint32 id,
+ *  char *data,
  *  uint32 distance,
- *  uint32 listening_port, 
- *  char *logger_name, 
+ *  uint32 listening_port,
+ *  char *logger_name,
  *  uint32 logger_port
  */
 int main(int argc, char **argv) {

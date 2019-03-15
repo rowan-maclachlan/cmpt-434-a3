@@ -1,4 +1,4 @@
-/* 
+/*
  * Rowan MacLachlan
  * rdm695 11165820
  * CMPT 434 Eager
@@ -29,8 +29,8 @@ void save_sensor_tests() {
 
     assert(0 == strcmp(sensor.port, "123"));
     assert(sensor.id == id);
-    assert(sensor.p.x = 987);
-    assert(sensor.p.y = 789);
+    assert(sensor.p.x == 987);
+    assert(sensor.p.y == 789);
     assert(sensor.ip_type == IPV4);
     assert(0 == strcmp(sensor.ip, ip));
 }

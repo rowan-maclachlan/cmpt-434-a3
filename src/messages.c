@@ -1,4 +1,4 @@
-/* 
+/*
  * Rowan MacLachlan
  * rdm695 11165820
  * CMPT 434 Eager
@@ -69,16 +69,16 @@ void log_info_msg(char *buf) {
            sender, receiver, original);
 }
 
-int serialize_request_msg(char *buf, bool req) {
+int serialize_request_msg(char *buf, unsigned int req) {
     if (NULL == buf) {
         fprintf(stderr, "input buffer cannot be NULL.\n");
         return -1;
     }
 
-    return sprintf(buf, "%d", req);
+    return sprintf(buf, "%u", req);
 }
 
-int deserialize_request_msg(char *buf, bool *req) {
+int deserialize_request_msg(char *buf, unsigned int *req) {
     if (NULL == buf) {
         fprintf(stderr, "Output buffer cannot be NULL.\n");
         return -1;
@@ -88,7 +88,7 @@ int deserialize_request_msg(char *buf, bool *req) {
         return -1;
     }
 
-    if (1 != sscanf(buf, "%d", (unsigned int*)req)) {
+    if (1 != sscanf(buf, "%u", req)) {
         perror("sscanf");
         fprintf(stderr, "sscanf failed to scan REQ message: \"%s\"\n", buf);
         return -1;
@@ -117,8 +117,8 @@ int serialize_contact_msg(char *buf, struct sensor *sensor) {
         fprintf(stderr, "input sensor cannot be NULL.\n");
         return -1;
     }
-    
-    if (0 >= (bytes = sprintf(buf, "(%d/%d/%s/%s)", 
+
+    if (0 >= (bytes = sprintf(buf, "(%d/%d/%s/%s)",
             sensor->id, sensor->ip_type, sensor->ip, sensor->port))) {
         perror("sprintf");
         fprintf(stderr, "Failed to serialize contact message.\n");
@@ -141,7 +141,7 @@ int deserialize_contact_msg(char *buf, struct sensor *sensor) {
         return -1;
     }
 
-    if (4 != sscanf(buf, "(%d/%d/%[.:abcdef0-9]/%d)",
+    if (4 != sscanf(buf, "(%d/%u/%[.:abcdef0-9]/%d)",
                 &sensor->id, &sensor->ip_type, sensor->ip, &port)) {
         fprintf(stderr, "sscanf failed to scan CONTACT message: \"%s\"\n", buf);
         return -1;
@@ -182,7 +182,7 @@ int serialize_id_msg(char *buf, int id, char *port_num, position *p) {
 /*
  * Deserialize the identify message.
  * This message is received by the logging process from the sensor node at the
- * beginning of every tick, to initiate contact. 
+ * beginning of every tick, to initiate contact.
  *
  * identify = { ID, listening_port_number, (x,y) }
  *          = "123/32001/(50,50)"
@@ -207,7 +207,7 @@ int deserialize_id_msg(char *buf, int *id, int *port_num, position *p) {
         return -1;
     }
 
-    if (4 != sscanf(buf, "%d/%d/(%d,%d)", 
+    if (4 != sscanf(buf, "%d/%d/(%d,%d)",
                 id, port_num, &p->x, &p->y)) {
         perror("sscanf");
         fprintf(stderr, "sscanf failed to scan ID message: \"%s\"\n", buf);
@@ -233,13 +233,13 @@ void log_id_msg(char *buf, char *src) {
  *
  * returns a serialize form of the message.
  */
-int serialize_conf_msg(char *buf, bool conf) {
+int serialize_conf_msg(char *buf, unsigned int conf) {
     if (NULL == buf) {
         fprintf(stderr, "input buffer cannot be NULL.\n");
         return -1;
     }
 
-    return sprintf(buf, "%d", (unsigned int)conf);
+    return sprintf(buf, "%u", conf);
 }
 
 /*
@@ -251,7 +251,7 @@ int serialize_conf_msg(char *buf, bool conf) {
  *
  * returns the deserialized components of the message.
  */
-int deserialize_conf_msg(char *buf, bool *conf) {
+int deserialize_conf_msg(char *buf, unsigned int *conf) {
     if (NULL == buf) {
         fprintf(stderr, "Output buffer cannot be NULL.\n");
         return -1;
@@ -261,7 +261,7 @@ int deserialize_conf_msg(char *buf, bool *conf) {
         return -1;
     }
 
-    if (1 != sscanf(buf, "%d", (unsigned int*)conf)) {
+    if (1 != sscanf(buf, "%u", conf)) {
         perror("sscanf");
         fprintf(stderr, "sscanf failed to scan CONF message: \"%s\"\n", buf);
         return -1;

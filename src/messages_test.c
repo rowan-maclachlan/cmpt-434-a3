@@ -1,4 +1,4 @@
-/* 
+/*
  * Rowan MacLachlan
  * rdm695 11165820
  * CMPT 434 Eager
@@ -7,7 +7,6 @@
  */
 
 #include <assert.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -18,7 +17,7 @@
 void test() {
     int id, ip_type, port;
     char ip[INET6_ADDRSTRLEN] = { 0 };
-    char buf[CONTACT_MSG_SIZE] 
+    char buf[CONTACT_MSG_SIZE]
         = "(123/2/ffe80::85f:61cc:9965:58fb/32000)";
 
     /* ID, IP, port number */
@@ -71,18 +70,18 @@ void serialize_contact_msg_test() {
         // 46...
         sensor.ip[i] = 0x41 + i;
     }
-    
+
     // "(123/2/ABCDEFGHIJKLMNOPQRSTUV.../32000)"
     char expected[CONTACT_MSG_SIZE]
         = { 0x28, 0x31, 0x32, 0x33, 0x2f, 0x32, 0x2f,
 
-            0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 
-            0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 
-            0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 
-            0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 
-            0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x63, 
-            0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a,  
-            0x6b, 0x6c, 0x6d, 
+            0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+            0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e,
+            0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55,
+            0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c,
+            0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x63,
+            0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a,
+            0x6b, 0x6c, 0x6d,
 
             0x2f, 0x33, 0x32, 0x30, 0x30, 0x30, 0x29 };
 
@@ -92,19 +91,19 @@ void serialize_contact_msg_test() {
 }
 
 void deserialize_contact_msg_test() {
-    char buf[CONTACT_MSG_SIZE] 
+    char buf[CONTACT_MSG_SIZE]
         = "(123/2/fe80::85f:61cc:9965:58fb/32000)";
 //        = { 0x28, 0x31, 0x32, 0x33, 0x2f, 0x32, 0x2f,
-//            0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 
-//            0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 
-//            0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 
-//            0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 
-//            0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x63, 
-//            0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a,  
-//            0x6b, 0x6c, 0x6d, 
+//            0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+//            0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e,
+//            0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55,
+//            0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c,
+//            0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x63,
+//            0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a,
+//            0x6b, 0x6c, 0x6d,
 //            0x2f, 0x33, 0x32, 0x30, 0x30, 0x30, 0x29 };
     struct sensor sensor = { 0 };
-    char ip[INET6_ADDRSTRLEN] = "fe80::85f:61cc:9965:58fb"; 
+    char ip[INET6_ADDRSTRLEN] = "fe80::85f:61cc:9965:58fb";
     /* ID, IP, port number */
     assert(0 == deserialize_contact_msg(buf, &sensor));
 
@@ -123,7 +122,7 @@ void serialize_identity_msg_test() {
 
     assert(17 == serialize_id_msg(buf, id, port_num, &p));
 
-    assert(0 == strcmp(buf, expected)); 
+    assert(0 == strcmp(buf, expected));
 }
 
 void deserialize_identity_msg_test() {
@@ -134,38 +133,38 @@ void deserialize_identity_msg_test() {
 
     assert(0 == deserialize_id_msg(buf, &id, &port_num, &p));
 
-    assert(id == 321); 
+    assert(id == 321);
     assert(port_num == 32001);
-    assert(p.x == 50); 
-    assert(p.y == 50); 
+    assert(p.x == 50);
+    assert(p.y == 50);
 }
 
 void serialize_confirmation_msg_test() {
-    bool conf = true;
+    unsigned int conf = 1;
     char buf[CONF_MSG_SIZE];
     char *expected = "1";
 
     assert(1 == serialize_conf_msg(buf, conf));
-    assert(0 == strcmp(buf, expected)); 
+    assert(0 == strcmp(buf, expected));
 
     conf = false;
     expected = "0";
     assert(1 == serialize_conf_msg(buf, conf));
-    assert(0 == strcmp(buf, expected)); 
+    assert(0 == strcmp(buf, expected));
 }
 
 void deserialize_confirmation_msg_test() {
-    bool conf = true;
+    unsigned int conf = 1;
     char *buf = "1";
 
     assert(0 == deserialize_conf_msg(buf, &conf));
-    assert(conf); 
+    assert(conf);
 
     buf = "0";
     conf = false;
 
     assert(0 == deserialize_conf_msg(buf, &conf));
-    assert(!conf); 
+    assert(!conf);
 }
 
 void serialize_data_msg_test() {
@@ -175,7 +174,7 @@ void serialize_data_msg_test() {
     char *payload = "the_payload";
 
     assert(15 == serialize_data_msg(buf, id, payload));
-    assert(0 == strcmp(buf, expected)); 
+    assert(0 == strcmp(buf, expected));
 }
 
 void deserialize_data_msg_test() {
@@ -184,8 +183,8 @@ void deserialize_data_msg_test() {
     char *buf = "123/the_payload";
 
     assert(0 == deserialize_data_msg(buf, &id, payload));
-    assert(0 == strcmp(payload, "the_payload")); 
-    assert(id == 123); 
+    assert(0 == strcmp(payload, "the_payload"));
+    assert(id == 123);
 }
 
 int main(void) {

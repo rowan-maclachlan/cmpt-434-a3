@@ -1,4 +1,4 @@
-/* 
+/*
  * Rowan MacLachlan
  * rdm695 11165820
  * CMPT 434 Eager
@@ -46,7 +46,7 @@ bool in_range(int T, position *p1, position *p2) {
 void move(int D, direction dir, position *p) {
     if (dir == NORTH) {
         p->y = (p->y + D) % U_LEFT;
-    } 
+    }
     else if (dir == EAST) {
         p->x = (p->x + D) % B_RIGHT;
     }
@@ -62,7 +62,7 @@ void move(int D, direction dir, position *p) {
  * Get a random direction
  */
 direction get_random_direction() {
-    int dir = arc4random() % (WEST + 1);
+    int dir = rand() % (WEST + 1);
     switch (dir) {
         case NORTH:
             return NORTH;
@@ -79,6 +79,6 @@ direction get_random_direction() {
  * Get a random position
  */
 void get_random_position(position *p) {
-    p->x = arc4random() % U_LEFT;
-    p->y = arc4random() % U_LEFT;
+    p->x = rand() % U_LEFT;
+    p->y = rand() % U_LEFT;
 }

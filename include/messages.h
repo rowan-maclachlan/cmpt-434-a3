@@ -1,4 +1,4 @@
-/* 
+/*
  * Rowan MacLachlan
  * rdm695 11165820
  * CMPT 434 Eager
@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <stdbool.h>
 #include "distance.h"
 
 #define INFO_MSG_SIZE 32
@@ -27,9 +26,9 @@ int deserialize_info_msg(char *buf, int *sender, int *receiver, int *original);
 
 void log_info_msg(char *buf);
 
-int serialize_request_msg(char *buf, bool req);
+int serialize_request_msg(char *buf, unsigned int req);
 
-int deserialize_request_msg(char *buf, bool *req);
+int deserialize_request_msg(char *buf, unsigned int *req);
 
 int serialize_contact_msg(char *buf, struct sensor *sensor);
 
@@ -41,9 +40,9 @@ int deserialize_id_msg(char *buf, int *id, int *port_num, position *p);
 
 void log_id_msg(char *buf, char *src);
 
-int serialize_conf_msg(char *buf, bool conf);
+int serialize_conf_msg(char *buf, unsigned int conf);
 
-int deserialize_conf_msg(char *buf, bool *conf);
+int deserialize_conf_msg(char *buf, unsigned int *conf);
 
 void log_conf_msg(char *buf, char *src);
 

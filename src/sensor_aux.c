@@ -1,4 +1,4 @@
-/* 
+/*
  * Rowan MacLachlan
  * rdm695 11165820
  * CMPT 434 Eager
@@ -10,9 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <unistd.h> 
-#include <errno.h> 
-#include <string.h> 
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include <netdb.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -28,7 +28,7 @@ bool init_args(int argc, char **argv, struct sensor *s, int *DISTANCE) {
         return false;
     }
 
-    if (0 >= sscanf(argv[1], "%d", &s->id) 
+    if (0 >= sscanf(argv[1], "%d", &s->id)
             || (0 > s->id) || (MAX_SENSORS <= s->id)) {
         fprintf(stderr, "Invalid ID. ID must be 0 <= %d < %d.\n", s->id, MAX_SENSORS);
         return false;
@@ -106,7 +106,7 @@ int send_info_msg(int sockfd, int mine, int theirs, int orig) {
 }
 
 
-int recv_conf_msg(int sockfd, bool *conf) {
+int recv_conf_msg(int sockfd, unsigned int *conf) {
     char CONF_MSG_BUF[CONF_MSG_SIZE] = { 0 };
 
     // listen for confirmation msg
@@ -114,7 +114,7 @@ int recv_conf_msg(int sockfd, bool *conf) {
         perror("sensor: recv (CONF)");
         return -1;
     }
-    
+
     deserialize_conf_msg(CONF_MSG_BUF, conf);
 
     return 0;

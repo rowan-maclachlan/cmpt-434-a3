@@ -1,4 +1,4 @@
-/* 
+/*
  * Rowan MacLachlan
  * rdm695 11165820
  * CMPT 434 Eager
@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <unistd.h> 
-#include <errno.h> 
-#include <string.h> 
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include <netdb.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -33,4 +33,4 @@ int send_data_msg(int sockfd, struct sensor *s);
 
 int send_id_msg(int sockfd, struct sensor *s);
 
-int recv_conf_msg(int sockfd, bool *conf);
+int recv_conf_msg(int sockfd, unsigned int *conf);
