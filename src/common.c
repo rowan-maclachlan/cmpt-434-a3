@@ -65,36 +65,33 @@ int server_connect_with(char *port) {
     struct addrinfo *servinfo, *p, hints;
     int sockfd, status;
     int yes = 1;
-    char hostname[HOSTNAME_SIZE];
+    char s[INET6_ADDRSTRLEN];
 
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
 	if ((status = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
 		perror("getaddrinfo");
-		return 1;
+		return -1;
 	}
-
-    gethostname(hostname, HOSTNAME_SIZE);
-    printf("Running on host %s and listening on port %s.\n", hostname, port);
 
 	// loop through all the results and bind to the first we can
 	for(p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket(p->ai_family, p->ai_socktype,
-				p->ai_protocol)) == -1) {
+		if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
 			perror("socket");
 			continue;
 		}
 
-		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
-				sizeof(int)) == -1) {
+		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
 			perror("setsockopt");
 			continue;
         }
 
 		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+            get_ip_str(p->ai_addr, s, INET6_ADDRSTRLEN);
+            fprintf(stderr, "\nFAILED WITH: %d, %s\n", sockfd, s);
 			close(sockfd);
 			perror("bind");
 			continue;
@@ -105,7 +102,7 @@ int server_connect_with(char *port) {
 
     if (p == NULL) {
         fprintf(stderr, "failed to bind to valid addrinfo\n");
-        return -1;
+        sockfd = -1;
     }
 
     freeaddrinfo(servinfo);

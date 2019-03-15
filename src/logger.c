@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
            port, TRANS_RANGE, num_nodes);
 
     if (-1 == (sockfd = server_connect_with(port))) {
-        fprintf(stderr, "server: Failed to setup.\n");
+        fprintf(stderr, "logger: Failed to setup listening connection.\n");
         fprintf(stderr, " *** FATAL *** \n");
         exit(1);
     }

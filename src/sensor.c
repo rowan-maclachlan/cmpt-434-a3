@@ -44,13 +44,13 @@ int connect_loop(char *logger_hostname, char *logger_port) {
         move(DISTANCE, get_random_direction(), &me.p);
 
         // open up for connections with other sensors
-        // if (-1 == (myfd = server_connect_with(me.port))) {
-        //     fprintf(stderr, "sensor: failed to listen for incoming connections.\n");
-        // }
+        if (-1 == (myfd = server_connect_with(me.port))) {
+            fprintf(stderr, "sensor %d: failed to listen for incoming connections.\n", me.id);
+        }
 
         // open connection
         if (-1 == (loggerfd = client_connect_to(logger_hostname, logger_port))) {
-            fprintf(stderr, "sensor: failed to connect to logger.\n");
+            fprintf(stderr, "sensor %d: failed to connect to logger.\n", me.id);
             fprintf(stderr, "*** FATAL ***\n");
             return -1;
         }
