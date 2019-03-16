@@ -1,0 +1,89 @@
+Rowan Maclachlan
+rdm695 11165820
+Monday March 18th 2019
+CMPT 434 Eager
+
+Assignment 3
+
+(1) TESTING
+
+(2) DESIGN
+
+(3) LIMITATIONS
+
+(1) TESTING
+   
+    See README.txt
+
+(2) DESIGN
+
+    Sensor Design
+
+        `./sensor_node <id> <payload> <D> <listening_port> <logger_hostname> <logger_port>`
+
+        A sensor runs in an infinite loop.  It sleeps for 1 second, and then
+        moves position.  Then, it tries to connect to the logger.  If it
+        successfully opens a TCP connection to the logger process, it moves
+        through a messaging sequence:
+
+        > It sends its ID message (id, position) to the logger.
+
+        > It receives a confirmation message from the logger which describes
+        whether or not the sensor is in range of the base station.
+
+        > If the sensor is in range of the base station, it sends it data packet
+        to the logger.  Then, it exits.
+
+        > If it was not in range, it closes its TCP connection to the logger and
+        continues to the next loop iteration.
+
+    `./logger <port_number> <T> <number of sensors>` 
+
+        The logger runs in a loop, keeping track of the of data packets it has
+        received from sensors.  It keeps track of these packets with a
+        statically allocated array of sensor node structs (indexed on sensor id
+        mod num_sensors), holding information about sensor positions, ports, ip
+        addresses, whether they have communicated their data packets with the
+        base station, etc.
+
+        It accepts connections on its listening socket.  When a connection
+        arrives, it proceeds through this messaging sequence:
+
+        > It recieves an ID message.  It saves the information about the sensor
+        it receives from.
+
+        > It calculates whether or not the sensor is in range of the base
+        station.  It sends the result of this calculation back to the sensor.
+
+        > If the sensor was in range of the base station, it expects to receive
+        the data packet from that sensor.  Upon receipt of that packet, it
+        adjust state information about which sensor payloads it has receives and
+        how many more it expects.
+
+        > Then, it closes its TCP connection with the sensor and proceeds to the
+        next iteration of the loop.
+
+    The primary components of the program are the sensor and logger loops.
+    Auxiliary methods reside in the files src/distance.c, and src/messaging.c
+    distance.c defines the toroidal grid world of the sensors and the operations
+    of movement and distance checking.  messaging.c defines all message
+    serialization and deserialization structures.
+
+    This submission defines no special protocols for transmitting messages
+    between sensors, as there were too many technical difficulties with network
+    library procedures and the multi-processing involved.  Therefore,
+    performance of the simulation is the baseline of what can be acheived.
+
+    On the other hand, the bare-bones implementation preserves sensor resources
+    as network traffic is kept to a minimum.
+    
+(3) LIMITATIONS
+
+    This does not implement any inter-sensor communication.  In hindsight,
+    simply multithreading sensor processes would have been a lot easier and
+    cleaner than trying to manage deadlocks with poll, select, etc.
+
+    The user must be sure that the parameters to the logger which define the
+    number of sensors correspond correctly to the number of sensors launched.
+    The user must also be sure that sensors are given unique IDs, between the
+    value of 1 and the number of sensors defined to the logger.
