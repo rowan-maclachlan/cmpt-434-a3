@@ -101,7 +101,7 @@ int listen_loop(int sockfd, int num_nodes) {
                     their_port, their_id, their_position);
 
         // send confirmation message
-        bool conf = false;
+        unsigned int conf = 0;
         if (in_range(TRANS_RANGE, &their_position, &BASE_STATION)) {
             conf = true;
         }
@@ -116,7 +116,7 @@ int listen_loop(int sockfd, int num_nodes) {
 
         // if in range, recv data msg
         char PAYLOAD[PAYLOAD_SIZE] = { 0 };
-        if (conf) {
+        if (1 == conf) {
             if (0 >= recv(sensorfd, DATA_MSG_BUF, DATA_MSG_SIZE, 0)) {
                 perror("logger: recv (DATA_MSG)");
                 goto _done;

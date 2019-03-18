@@ -156,8 +156,7 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             struct sensor s;
             char CONTACT_MSG_BUF[CONTACT_MSG_SIZE] = { 0 };
             if (0 >= recv(loggerfd, CONTACT_MSG_BUF, CONTACT_MSG_SIZE, 0)) {
-                perror("sensor: recv (CONTACT)");
-                fprintf(stderr, "Invalid loggerfd: %d\n", loggerfd);
+                fprintf(stderr, "Error: recv: invalid loggerfd: %d\n", loggerfd);
                 goto _done;
             }
 
