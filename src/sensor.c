@@ -37,7 +37,7 @@ struct timeval poll_val = { 1, 0 };
 /* thread listening for connections */
 pthread_t listening_thread;
 /* thread data */
-struct thread_data { 
+struct thread_data {
     int id;
     char port[PORT_SIZE];
     int ret;
@@ -63,7 +63,7 @@ void *listen_loop(void *arg) {
         this->ret = -1;
         pthread_exit(NULL);
     }
-    
+
     printf("sensor %d listening on port %s\n", this->id, this->port);
 
     if (listen(myfd, MAX_SENSORS) == -1) {
@@ -142,6 +142,7 @@ int connect_loop(char *logger_hostname, char *logger_port) {
         }
 
         // if in range, send data msg
+        // TODO send ALL data messages
         if (1 == conf) {
             if (0 > send_data_msg(loggerfd, &me)) {
                 goto _done;
@@ -193,7 +194,7 @@ int connect_loop(char *logger_hostname, char *logger_port) {
 _done:
         close(loggerfd);
         close(sensorfd);
-        
+
     }
 
     if (0 != pthread_cancel(listening_thread)) {

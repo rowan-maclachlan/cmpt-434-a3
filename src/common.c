@@ -1,4 +1,4 @@
-/* 
+/*
  * Rowan MacLachlan
  * rdm695 11165820
  * CMPT 434 Eager
@@ -47,11 +47,11 @@ enum ip_type get_ip_type(sa_family_t sa_ft) {
     return sa_ft == AF_INET ? IPV4 : IPV6;
 }
 
-void save_sensor(struct sensor *sensor, 
+void save_sensor(struct sensor *sensor,
                  enum ip_type ip_type,
                  char *their_addr,
-                 int their_port, 
-                 int their_id, 
+                 int their_port,
+                 int their_id,
                  position their_position) {
     sensor->id = their_id;
     sensor->p = their_position;
@@ -91,9 +91,9 @@ int server_connect_with(char *port) {
 
 		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
             get_ip_str(p->ai_addr, s, INET6_ADDRSTRLEN);
-            fprintf(stderr, "\nFAILED WITH: %d, %s\n", sockfd, s);
-			close(sockfd);
+            fprintf(stderr, "Error: failed to connect to %s with %d\n", s, sockfd);
 			perror("bind");
+			close(sockfd);
 			continue;
 		}
 
@@ -134,6 +134,8 @@ int client_connect_to(char *host, char *port) {
         }
 
         if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+            get_ip_str(p->ai_addr, s, INET6_ADDRSTRLEN);
+            fprintf(stderr, "Error: failed to connect to %s with %d\n", s, sockfd);
             perror("sensor: connect");
             close(sockfd);
             continue;
