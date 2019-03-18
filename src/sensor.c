@@ -35,18 +35,12 @@ static struct sensor sensors[MAX_SENSORS] = { 0 };
 struct timeval poll_val = { 1, 0 };
 
 int connect_loop(char *logger_hostname, char *logger_port) {
-    int myfd, loggerfd, sensorfd;
-    // fd_set master_set;
+    int loggerfd;
 
     while(1) {
         sleep(1);
 
         move(DISTANCE, get_random_direction(), &me.p);
-
-        // open up for connections with other sensors
-        if (-1 == (myfd = server_connect_with(me.port))) {
-            fprintf(stderr, "sensor %d: failed to listen for incoming connections.\n", me.id);
-        }
 
         // open connection
         if (-1 == (loggerfd = client_connect_to(logger_hostname, logger_port))) {
@@ -54,16 +48,6 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             fprintf(stderr, "*** FATAL ***\n");
             return -1;
         }
-
-        //FD_ZERO(&master_set);
-        //FD_SET(myfd, &master_set);
-        //FD_SET(loggerfd, &master_set);
-        //int maxfd = loggerfd > myfd ? loggerfd : myfd;
-
-        //if (-1 == select(maxfd+1, &master_set, NULL, NULL, &poll_val)) {
-        //    perror("sensor: select\n");
-        //    goto _done;
-        //}
 
         if (-1 == send_id_msg(loggerfd, &me)) {
             goto _done;
@@ -85,48 +69,9 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             close(loggerfd);
             break;
         }
-        else { // setup alternate contact
-            struct sensor s;
-            char CONTACT_MSG_BUF[CONTACT_MSG_SIZE] = { 0 };
-            if (0 >= recv(loggerfd, CONTACT_MSG_BUF, CONTACT_MSG_SIZE, 0)) {
-                perror("sensor: recv (CONTACT)");
-                fprintf(stderr, "Invalid loggerfd: %d\n", loggerfd);
-                goto _done;
-            }
-
-            deserialize_contact_msg(CONTACT_MSG_BUF, &s);
-            memcpy(&sensors[s.id], &s, sizeof(s));
-
-            // don't connect if the contact is ourselves
-            if (me.id == s.id) {
-                goto _done;
-            }
-
-            // open tcp with s
-            if(-1 == (sensorfd = client_connect_to(s.ip, s.port))) {
-                fprintf(stderr, "sensor %d: Failed to open connection to sensor %d\n", me.id, s.id);
-                // log communication to logger process
-                if (0 > send_info_msg(loggerfd, me.id, me.id, me.id)) {
-                    goto _done;
-                }
-                goto _done;
-            }
-
-            // transmit message to s
-            // TODO this should be ALL the messages I am carrying
-            if (0 > send_data_msg(sensorfd, &me)) {
-                goto _done;
-            }
-
-            // log communication to logger process
-            if (0 > send_info_msg(loggerfd, me.id, s.id, me.id)) {
-                goto _done;
-            }
-        }
 
 _done:
         close(loggerfd);
-        close(sensorfd);
     }
 
     return 0;

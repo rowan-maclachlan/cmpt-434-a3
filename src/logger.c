@@ -1,4 +1,4 @@
-/* 
+/*
  * Rowan MacLachlan
  * rdm695 11165820
  * CMPT 434 Eager
@@ -31,9 +31,9 @@ static position BASE_STATION = { BASE_STATION_X, BASE_STATION_Y };
 /* Track which sensors have delivered their payloads */
 static struct sensor sensors[MAX_SENSORS] = { 0 };
 
-bool _init_args(int argc, 
-                char **argv, 
-                unsigned int *num_nodes, 
+bool _init_args(int argc,
+                char **argv,
+                unsigned int *num_nodes,
                 char *port) {
     if (argc != 4) {
         fprintf(stderr, "Not enough arguments.\n");
@@ -49,7 +49,7 @@ bool _init_args(int argc,
         fprintf(stderr, "Invalid number of nodes: set 0 < %u < %u.\n", *num_nodes, MAX_SENSORS);
         return false;
     }
-    
+
     return true;
 }
 
@@ -62,7 +62,6 @@ int listen_loop(int sockfd, int num_nodes) {
     char ID_MSG_BUF[ID_MSG_SIZE] = { 0 };
     char CONF_MSG_BUF[CONF_MSG_SIZE] = { 0 };
     char DATA_MSG_BUF[DATA_MSG_SIZE] = { 0 };
-    char CONTACT_MSG_BUF[CONTACT_MSG_SIZE] = { 0 };
 
     if (listen(sockfd, MAX_SENSORS) == -1) {
         perror("listen");
@@ -90,7 +89,7 @@ int listen_loop(int sockfd, int num_nodes) {
         }
 
         log_id_msg(ID_MSG_BUF, "logger");
-        
+
         int their_id = 0;
         int their_port = 0;
         position their_position = { 0, 0 };
@@ -98,9 +97,9 @@ int listen_loop(int sockfd, int num_nodes) {
 
         save_sensor(&(sensors[their_id]),
                     get_ip_type(their_addr.ss_family),
-                    s, 
+                    s,
                     their_port, their_id, their_position);
-        
+
         // send confirmation message
         bool conf = false;
         if (in_range(TRANS_RANGE, &their_position, &BASE_STATION)) {
@@ -142,44 +141,7 @@ int listen_loop(int sockfd, int num_nodes) {
                 num_nodes--;
             }
         }
-        // if not in range, send alternate message and receive logs
-        else {
-            int closer = their_id;
-            for (int i = 0; i < MAX_SENSORS; i++) {
-                struct sensor s = sensors[i];
-                if (!s.active) {
-                    continue;
-                }
-                if (closest(&BASE_STATION, &s.p, &sensors[closer].p) // closer than curr
-                  && in_range(TRANS_RANGE, &s.p, &sensors[their_id].p) // in range of orig
-                  && !s.rcvd) { // not yet done transmitting
-                    // make sure the sensor node is in range of me, 
-                    // closer than me to the base station, and not
-                    // already done transmitting
-                    closer = i;
-                }
-            }
-            if (0 >= serialize_contact_msg(CONTACT_MSG_BUF, &sensors[closer])) {
-                fprintf(stderr, "logger: failed to serialize contact message.\n");
-                goto _done;
-            }
-            if (0 >= send(sensorfd, CONTACT_MSG_BUF, CONTACT_MSG_SIZE, 0)) {
-                perror("logger: send (CONTACT_MSG)");
-                goto _done;
-            }
-
-            char INFO_MSG_BUF[INFO_MSG_SIZE] = { 0 };
-            // TODO receive as many logs as arrive (INFO messages)
-            if (closer != their_id) {
-                if (0 >= recv(sensorfd, INFO_MSG_BUF, INFO_MSG_SIZE, 0)) {
-                    perror("logger: recv (INFO)");
-                    goto _done;
-                }
-                log_info_msg(INFO_MSG_BUF);
-            }
-        }
-
-_done: 
+_done:
         close(sensorfd);
     }
 
