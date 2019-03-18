@@ -11,6 +11,8 @@ Assignment 3
 
 (3) LIMITATIONS
 
+(4) PART B
+
 (1) TESTING
    
     There are two executable files: `sensor_node` and `logger`.
@@ -49,3 +51,9 @@ Assignment 3
 (3) LIMITATIONS
     
     see DESIGN.txt
+
+(4) PART B
+    
+    submission for part B can be found in the file ./p2/a3.pdf
+
+
