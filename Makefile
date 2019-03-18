@@ -44,7 +44,7 @@ tests:
 
 # SENSOR NODE
 sensor: $(OBJ)sensor.o $(OBJ)sensor_aux.o $(COM_OBJ)
-	$(CC) $(C_FLAGS) $(INC_FLAGS) $^ -o $@
+	$(CC) $(C_FLAGS) $(INC_FLAGS) -lpthread $^ -o $@
 
 $(OBJ)sensor.o: $(SRC)sensor.c $(INC)sensor_aux.h $(COM_INC)
 	$(CC) $(C_FLAGS) -c $(INC_FLAGS) $< -o $@

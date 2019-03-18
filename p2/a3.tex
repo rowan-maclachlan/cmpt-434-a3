@@ -77,10 +77,10 @@ Part B
         interface: B
         Entry 3:
         address prefix: 10.11.42.0/23 
-        address of next hop router: 10.11.47.127
             address: 00001010 00001011 00011010 00000000
             mask:    11111111 11111111 11111110 00000000
             prefix:  00001010 00001011 00011010 00000000
+        address of next hop router: 10.11.47.127
         interface: A
         Entry 4:
         address prefix: 10.11.32.0/20
@@ -93,6 +93,10 @@ Part B
         \begin{enumerate}
             \item 10.11.43.127\\
                 00001010 00001011 00011011 01111111\\
+                \& entry1 = 00001010 00001011 00011011 01000000\\
+                \& entry2 = 00001010 00001011 00011011 01111111\\
+                \& entry3 = 00001010 00001011 00011010 00000000\\
+                \& entry4 = 00001010 00001011 00010000 00000000\\
                 This address does not match the prefix of Entry 1.  It does
                 match with Entry 3 and 4.  However, it has a longer match Entry
                 3 than with entry 4.  Therefore it will be forwarded to the next

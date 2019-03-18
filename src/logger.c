@@ -65,7 +65,7 @@ int listen_loop(int sockfd, int num_nodes) {
     char CONTACT_MSG_BUF[CONTACT_MSG_SIZE] = { 0 };
 
     if (listen(sockfd, MAX_SENSORS) == -1) {
-        perror("listen");
+        perror("logger: listen");
         return -1;
     }
 
