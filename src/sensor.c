@@ -75,12 +75,13 @@ void *listen_loop(void *arg) {
     printf("sensor: waiting for connections...\n");
 
     while(1) {
-        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cancel_type);
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &cancel_type);
         sensorfd = accept(myfd, (struct sockaddr *)&their_addr, &sin_size);
         if (sensorfd == -1) {
             perror("accept");
             continue;
         }
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cancel_type);
 
         void * in_addr = get_in_addr((struct sockaddr *)&their_addr);
         inet_ntop(their_addr.ss_family, in_addr, s, sizeof s);
@@ -101,7 +102,6 @@ void *listen_loop(void *arg) {
        log_data_msg("sensor", DATA_MSG_BUF);
        strncpy(sensors[their_id].payload, PAYLOAD, PAYLOAD_SIZE);
        sensors[their_id].rcvd = true;
-       pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cancel_type);
     }
 
     pthread_exit(NULL);
@@ -109,21 +109,23 @@ void *listen_loop(void *arg) {
 
 int connect_loop(char *logger_hostname, char *logger_port) {
     int loggerfd, sensorfd;
+    struct sensor s;
+    char CONTACT_MSG_BUF[CONTACT_MSG_SIZE] = { 0 };
+
+    thread_data.id = me.id;
+    strncpy(thread_data.port, me.port, PORT_SIZE);
+    thread_data.ret = 0;
+    if (0 != pthread_create(&listening_thread, NULL, listen_loop, (void*)&thread_data)) {
+        perror("sensor: pthread_create:");
+        fprintf(stderr, "Error: sensor failed to create listening thread.\n");
+        fprintf(stderr, "*** FATAL ***\n");
+        return -1;
+    }
 
     while(1) {
         sleep(1);
 
         move(DISTANCE, get_random_direction(), &me.p);
-
-        thread_data.id = me.id;
-        strncpy(thread_data.port, me.port, PORT_SIZE);
-        thread_data.ret = 0;
-        if (0 != pthread_create(&listening_thread, NULL, listen_loop, (void*)&thread_data)) {
-            perror("sensor: pthread_create:");
-            fprintf(stderr, "Error: sensor failed to create listening thread.\n");
-            fprintf(stderr, "*** FATAL ***\n");
-            return -1;
-        }
 
         // open connection
         if (-1 == (loggerfd = client_connect_to(logger_hostname, logger_port))) {
@@ -153,8 +155,6 @@ int connect_loop(char *logger_hostname, char *logger_port) {
             break;
         }
         else { // setup alternate contact
-            struct sensor s;
-            char CONTACT_MSG_BUF[CONTACT_MSG_SIZE] = { 0 };
             if (0 >= recv(loggerfd, CONTACT_MSG_BUF, CONTACT_MSG_SIZE, 0)) {
                 fprintf(stderr, "Error: recv: invalid loggerfd: %d\n", loggerfd);
                 goto _done;
@@ -206,7 +206,7 @@ _done:
         fprintf(stderr, "listening thread failed.\n");
     }
 
-    return 0;
+    return thread_data.ret || 0;
 
 }
 
