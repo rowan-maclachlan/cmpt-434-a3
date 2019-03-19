@@ -251,17 +251,17 @@ Part B
             \item What is the value of ssthresh at the 18th transmission
                 round?\\
                 Assuming \textit{ssthresh} is updated to be equal to the last
-                highest value of \textit{cwnd} acheived before packet loss,
-                \textit{ssthresh} must be 70.
+                highest value of \textit{cwnd}/2 acheived before packet loss,
+                \textit{ssthresh} must be 35.
             \item What is the value of ssthresh at the 24th transmission
                 round?\\
-                \textit{ssthresh} was likely updated to a value of 42 after
+                \textit{ssthresh} was likely updated to a value of 21 after
                 packet loss was detected in round 21 with \textit{cwnd} equal to
                 42.
             \item Assuming that a segment loss is detected after the 26th round
                 by the receipt of a triple duplicate ACK, what will be the new
                 value of ssthresh and cwnd?\\
-                \textit{ssthresh} will be set to 16, the last highest value of
+                \textit{ssthresh} will be set to 8, the last highest value of
                 \textit{cwnd} before packet loss, and \textit{cwnd} will be set
                 to 8, half the previous value of \textit{cwnd}.
         \end{enumerate}
